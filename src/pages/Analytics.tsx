@@ -23,9 +23,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
-import { format } from "date-fns";
 
 const Analytics = () => {
   const [selectedMonth, setSelectedMonth] = useState("march");
@@ -54,20 +53,63 @@ const Analytics = () => {
       checkInTime: "08:30",
       status: "too-early",
     },
-  ];
-
-  // Reorganized data for the chart with dates on x-axis
-  const chartData = [
-    { date: "Mar 20", "08:00": 12, "09:00": 28, "10:00": 15 },
-    { date: "Mar 21", "08:00": 15, "09:00": 25, "10:00": 18 },
-    { date: "Mar 22", "08:00": 10, "09:00": 30, "10:00": 20 },
-    { date: "Mar 23", "08:00": 8, "09:00": 22, "10:00": 12 },
+    // Additional data points for different dates
+    { 
+      id: 4,
+      name: "John Doe",
+      date: "2024-03-21",
+      checkInTime: "08:30",
+      status: "on-time",
+    },
+    { 
+      id: 5,
+      name: "Jane Smith",
+      date: "2024-03-21",
+      checkInTime: "09:45",
+      status: "late",
+    },
+    { 
+      id: 6,
+      name: "Mike Johnson",
+      date: "2024-03-21",
+      checkInTime: "08:15",
+      status: "too-early",
+    },
   ];
 
   // Filter attendance data based on name
-  const filteredAttendance = attendanceData.filter(record =>
-    record.name.toLowerCase().includes(nameFilter.toLowerCase())
+  const filteredAttendance = useMemo(() => 
+    attendanceData.filter(record =>
+      record.name.toLowerCase().includes(nameFilter.toLowerCase())
+    ),
+    [nameFilter, attendanceData]
   );
+
+  // Generate chart data based on filtered attendance
+  const chartData = useMemo(() => {
+    const dateGroups = filteredAttendance.reduce((acc, record) => {
+      const date = record.date;
+      if (!acc[date]) {
+        acc[date] = {
+          date: date,
+          "08:00": 0,
+          "09:00": 0,
+          "10:00": 0,
+        };
+      }
+      
+      // Increment the appropriate hour based on check-in time
+      const hour = parseInt(record.checkInTime.split(":")[0]);
+      const timeKey = `${hour.toString().padStart(2, "0")}:00`;
+      if (acc[date][timeKey] !== undefined) {
+        acc[date][timeKey]++;
+      }
+      
+      return acc;
+    }, {});
+
+    return Object.values(dateGroups);
+  }, [filteredAttendance]);
 
   // Calculate statistics
   const totalRecords = filteredAttendance.length;
@@ -156,7 +198,7 @@ const Analytics = () => {
                 />
                 <YAxis 
                   stroke="currentColor"
-                  ticks={["08:00", "09:00", "10:00"]}
+                  ticks={[0, 1, 2, 3, 4, 5]}
                 />
                 <Tooltip 
                   contentStyle={{ 
