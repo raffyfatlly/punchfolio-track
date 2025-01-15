@@ -34,12 +34,19 @@ export default {
           foreground: "#ffffff",
         },
         secondary: {
-          DEFAULT: "#33C5C5", // Tiffany/teal color
+          DEFAULT: "#33C5C5", // Tiffany blue for accents only (10%)
           foreground: "#ffffff",
         },
         accent: {
-          DEFAULT: "#E6F9F9", // Soft teal background
+          DEFAULT: "#FFDEE2", // Soft pink for secondary backgrounds
           foreground: "#1e293b",
+        },
+        staff: {
+          blue: "#0EA5E9",
+          purple: "#9333EA",
+          orange: "#F97316",
+          green: "#22C55E",
+          red: "#EF4444",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",

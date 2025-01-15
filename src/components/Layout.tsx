@@ -21,9 +21,9 @@ export function Layout() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-white to-accent/20">
+      <div className="min-h-screen flex w-full bg-white">
         <AppSidebar />
-        <main className="flex-1 p-4 md:p-6 relative">
+        <main className="flex-1 p-4 md:p-6 relative bg-gradient-to-br from-white via-white to-accent/10">
           <div className="sticky top-0 z-10 pb-4 backdrop-blur-sm">
             <SidebarTrigger className="md:hidden" />
           </div>
