@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Users } from "lucide-react";
+import { Users, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Dashboard = () => {
@@ -35,7 +35,7 @@ const Dashboard = () => {
                 className="relative h-32 w-32 rounded-full bg-white hover:bg-white/90"
                 onClick={() => navigate("/check-in")}
               >
-                <Camera className="h-12 w-12 text-primary" />
+                <Clock className="h-12 w-12 text-primary" />
               </Button>
             </div>
             <div className="text-center space-y-2">
