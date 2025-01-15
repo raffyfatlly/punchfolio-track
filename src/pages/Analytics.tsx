@@ -26,12 +26,31 @@ import {
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 
+// Define interfaces for our data structures
+interface AttendanceRecord {
+  id: number;
+  name: string;
+  date: string;
+  checkInTime: string;
+  status: "on-time" | "late" | "too-early";
+}
+
+interface ChartDataPoint {
+  date: string;
+  checkInTime: string;
+  value: number;
+}
+
+interface DateGroups {
+  [key: string]: ChartDataPoint;
+}
+
 const Analytics = () => {
   const [selectedMonth, setSelectedMonth] = useState("march");
   const [nameFilter, setNameFilter] = useState("");
 
   // Mock data with dates on x-axis and times on y-axis
-  const attendanceData = [
+  const attendanceData: AttendanceRecord[] = [
     { 
       id: 1,
       name: "John Doe",
@@ -86,7 +105,7 @@ const Analytics = () => {
 
   // Generate chart data based on filtered attendance
   const chartData = useMemo(() => {
-    const dateGroups = filteredAttendance.reduce((acc, record) => {
+    const dateGroups = filteredAttendance.reduce<DateGroups>((acc, record) => {
       const date = record.date;
       if (!acc[date]) {
         acc[date] = {
