@@ -60,27 +60,42 @@ const CheckIn = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Staff Check In</h1>
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="text-center space-y-2">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          Staff Check In
+        </h1>
+        <p className="text-muted-foreground">
+          Take a photo to record your attendance
+        </p>
+      </div>
       
-      <Card className="p-6 max-w-2xl mx-auto">
+      <Card className="p-8 bg-gradient-to-br from-white to-muted/20">
         <div className="space-y-6">
           {!stream && !photo && (
-            <Button onClick={startCamera} className="w-full">
-              <Camera className="mr-2 h-4 w-4" />
+            <Button 
+              onClick={startCamera} 
+              className="w-full h-16 text-lg bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
+            >
+              <Camera className="mr-2 h-6 w-6" />
               Start Camera
             </Button>
           )}
 
           {stream && (
             <>
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                className="w-full rounded-lg"
-              />
-              <Button onClick={takePhoto} className="w-full">
+              <div className="relative rounded-lg overflow-hidden shadow-lg">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full"
+                />
+              </div>
+              <Button 
+                onClick={takePhoto} 
+                className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
+              >
                 Take Photo
               </Button>
             </>
@@ -88,8 +103,14 @@ const CheckIn = () => {
 
           {photo && (
             <>
-              <img src={photo} alt="Check-in" className="w-full rounded-lg" />
-              <Button onClick={resetCamera} variant="outline" className="w-full">
+              <div className="relative rounded-lg overflow-hidden shadow-lg">
+                <img src={photo} alt="Check-in" className="w-full" />
+              </div>
+              <Button 
+                onClick={resetCamera} 
+                variant="outline" 
+                className="w-full h-12 border-2"
+              >
                 <RefreshCcw className="mr-2 h-4 w-4" />
                 Take Another Photo
               </Button>
