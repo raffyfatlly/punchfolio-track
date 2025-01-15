@@ -53,7 +53,6 @@ const Analytics = () => {
       checkInTime: "08:30",
       status: "too-early",
     },
-    // Additional data points for different dates
     { 
       id: 4,
       name: "John Doe",
@@ -91,24 +90,17 @@ const Analytics = () => {
       const date = record.date;
       if (!acc[date]) {
         acc[date] = {
-          date: date,
-          "08:00": 0,
-          "09:00": 0,
-          "10:00": 0,
+          date,
+          checkInTime: record.checkInTime,
+          value: 1,
         };
       }
-      
-      // Increment the appropriate hour based on check-in time
-      const hour = parseInt(record.checkInTime.split(":")[0]);
-      const timeKey = `${hour.toString().padStart(2, "0")}:00`;
-      if (acc[date][timeKey] !== undefined) {
-        acc[date][timeKey]++;
-      }
-      
       return acc;
     }, {});
 
-    return Object.values(dateGroups);
+    return Object.values(dateGroups).sort((a, b) => 
+      a.checkInTime.localeCompare(b.checkInTime)
+    );
   }, [filteredAttendance]);
 
   // Calculate statistics
@@ -142,6 +134,9 @@ const Analytics = () => {
         return status;
     }
   };
+
+  // Generate time ticks for Y-axis
+  const timeTicks = ["07:00", "08:00", "09:00", "10:00", "11:00"];
 
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg">
@@ -198,7 +193,9 @@ const Analytics = () => {
                 />
                 <YAxis 
                   stroke="currentColor"
-                  ticks={[0, 1, 2, 3, 4, 5]}
+                  ticks={timeTicks}
+                  domain={['07:00', '11:00']}
+                  type="category"
                 />
                 <Tooltip 
                   contentStyle={{ 
@@ -209,24 +206,10 @@ const Analytics = () => {
                 />
                 <Line 
                   type="monotone" 
-                  dataKey="08:00"
+                  dataKey="checkInTime"
                   stroke="var(--primary)"
                   strokeWidth={2}
                   dot={{ fill: "var(--primary)" }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="09:00"
-                  stroke="var(--secondary)"
-                  strokeWidth={2}
-                  dot={{ fill: "var(--secondary)" }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="10:00"
-                  stroke="var(--accent)"
-                  strokeWidth={2}
-                  dot={{ fill: "var(--accent)" }}
                 />
               </LineChart>
             </ResponsiveContainer>
