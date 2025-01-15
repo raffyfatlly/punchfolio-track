@@ -1,4 +1,4 @@
-import { Camera, Users, BarChart2, Home } from "lucide-react";
+import { Camera, Users, BarChart2, Home, LogOut } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -10,22 +10,37 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
-
-const items = [
-  { title: "Dashboard", url: "/", icon: Home },
-  { title: "Check In", url: "/check-in", icon: Camera },
-  { title: "Staff", url: "/staff", icon: Users },
-  { title: "Analytics", url: "/analytics", icon: BarChart2 },
-];
+import { useAuth } from "@/contexts/AuthContext";
 
 export function AppSidebar() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const staffItems = [
+    { title: "Dashboard", url: "/", icon: Home },
+    { title: "Check In", url: "/check-in", icon: Camera },
+  ];
+
+  const adminItems = [
+    { title: "Dashboard", url: "/", icon: Home },
+    { title: "Staff", url: "/staff", icon: Users },
+    { title: "Analytics", url: "/analytics", icon: BarChart2 },
+  ];
+
+  const items = user?.role === "admin" ? adminItems : staffItems;
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Staff Attendance</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            {user?.role === "admin" ? "Management" : "Staff Portal"}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
@@ -36,6 +51,12 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={handleLogout}>
+                  <LogOut className="w-5 h-5" />
+                  <span>Logout</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
