@@ -25,10 +25,29 @@ import {
 } from "@/components/ui/table";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { format, parse, isAfter, isBefore, addMinutes, parseISO } from "date-fns";
+
+const CLOCK_IN_TIME = "09:00"; // Standard clock-in time
+const EARLY_BUFFER = 20; // Minutes before clock-in time that are considered "on-time"
 
 const Analytics = () => {
   const [selectedMonth, setSelectedMonth] = useState("march");
   const [nameFilter, setNameFilter] = useState("");
+
+  // Helper function to determine attendance status
+  const getAttendanceStatus = (checkInTime: string) => {
+    const standardTime = parse(CLOCK_IN_TIME, "HH:mm", new Date());
+    const earlyTime = addMinutes(standardTime, -EARLY_BUFFER);
+    const actualTime = parse(checkInTime, "HH:mm", new Date());
+
+    if (isBefore(actualTime, earlyTime)) {
+      return "too-early";
+    } else if (isAfter(actualTime, standardTime)) {
+      return "late";
+    } else {
+      return "on-time";
+    }
+  };
 
   // Mock data - in a real app, this would come from your backend
   const attendanceData = [
@@ -36,24 +55,23 @@ const Analytics = () => {
       id: 1,
       name: "John Doe",
       date: "2024-03-20",
-      checkInTime: "09:00",
-      status: "on-time",
+      checkInTime: "08:45",
+      status: getAttendanceStatus("08:45"),
     },
     { 
       id: 2,
       name: "Jane Smith",
       date: "2024-03-20",
       checkInTime: "09:15",
-      status: "late",
+      status: getAttendanceStatus("09:15"),
     },
     { 
       id: 3,
       name: "Mike Johnson",
       date: "2024-03-20",
-      checkInTime: "08:45",
-      status: "on-time",
+      checkInTime: "08:30",
+      status: getAttendanceStatus("08:30"),
     },
-    // Add more attendance records as needed
   ];
 
   const hourlyData = [
@@ -77,6 +95,33 @@ const Analytics = () => {
   const totalRecords = filteredAttendance.length;
   const onTimeCount = filteredAttendance.filter(record => record.status === "on-time").length;
   const lateCount = filteredAttendance.filter(record => record.status === "late").length;
+  const tooEarlyCount = filteredAttendance.filter(record => record.status === "too-early").length;
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "on-time":
+        return "bg-green-100 text-green-800";
+      case "late":
+        return "bg-red-100 text-red-800";
+      case "too-early":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "on-time":
+        return "On Time";
+      case "late":
+        return "Late";
+      case "too-early":
+        return "Too Early";
+      default:
+        return status;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -97,12 +142,11 @@ const Analytics = () => {
             <SelectItem value="january">January</SelectItem>
             <SelectItem value="february">February</SelectItem>
             <SelectItem value="march">March</SelectItem>
-            {/* Add more months */}
           </SelectContent>
         </Select>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-4 gap-4">
         <Card className="p-4">
           <h3 className="text-lg font-medium">Total Check-ins</h3>
           <p className="text-3xl font-bold">{totalRecords}</p>
@@ -114,6 +158,10 @@ const Analytics = () => {
         <Card className="p-4">
           <h3 className="text-lg font-medium">Late</h3>
           <p className="text-3xl font-bold text-red-500">{lateCount}</p>
+        </Card>
+        <Card className="p-4">
+          <h3 className="text-lg font-medium">Too Early</h3>
+          <p className="text-3xl font-bold text-yellow-500">{tooEarlyCount}</p>
         </Card>
       </div>
 
@@ -178,10 +226,8 @@ const Analytics = () => {
                     <TableCell>{record.date}</TableCell>
                     <TableCell>{record.checkInTime}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-sm ${
-                        record.status === 'on-time' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {record.status === 'on-time' ? 'On Time' : 'Late'}
+                      <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(record.status)}`}>
+                        {getStatusText(record.status)}
                       </span>
                     </TableCell>
                   </TableRow>
