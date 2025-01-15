@@ -120,6 +120,6 @@ const CheckIn = () => {
       </Card>
     </div>
   );
-};
+}
 
 export default CheckIn;
