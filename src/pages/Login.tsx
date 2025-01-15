@@ -36,7 +36,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-pink-50 p-4">
-      <Card className="w-full max-w-md p-8 space-y-8 shadow-lg bg-white/80 backdrop-blur-sm">
+      <Card className="w-full max-w-md p-8 space-y-8 shadow-lg bg-white/80 backdrop-blur-sm rounded-[2rem] border-none">
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             Welcome Back
@@ -55,7 +55,7 @@ const Login = () => {
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="pl-10 bg-white/50 border-muted h-12"
+                className="pl-10 bg-white/50 border-muted h-12 rounded-2xl"
                 required
               />
             </div>
@@ -67,7 +67,7 @@ const Login = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 bg-white/50 border-muted h-12"
+                className="pl-10 bg-white/50 border-muted h-12 rounded-2xl"
                 required
               />
             </div>
@@ -75,7 +75,7 @@ const Login = () => {
 
           <Button
             type="submit"
-            className="w-full h-12 text-base font-medium bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
+            className="w-full h-12 text-base font-medium bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity rounded-2xl"
           >
             Sign In
           </Button>

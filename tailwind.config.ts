@@ -18,6 +18,11 @@ export default {
       },
     },
     extend: {
+      borderRadius: {
+        lg: "1rem",
+        md: "0.75rem",
+        sm: "0.5rem",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -25,15 +30,15 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#FF8BA7", // Soft pink from the design
+          DEFAULT: "#FF8BA7",
           foreground: "#ffffff",
         },
         secondary: {
-          DEFAULT: "#FFC2D1", // Lighter pink from the design
+          DEFAULT: "#FFC2D1",
           foreground: "#1e293b",
         },
         accent: {
-          DEFAULT: "#FFE5E5", // Very light pink from the design
+          DEFAULT: "#FFE5E5",
           foreground: "#1e293b",
         },
         destructive: {
@@ -41,7 +46,7 @@ export default {
           foreground: "hsl(var(--destructive-foreground))",
         },
         muted: {
-          DEFAULT: "#F8F9FC", // Light gray from the design
+          DEFAULT: "#F8F9FC",
           foreground: "#666666",
         },
         popover: {
@@ -52,11 +57,6 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-      },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
         "accordion-down": {
