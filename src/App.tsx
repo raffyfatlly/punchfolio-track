@@ -8,25 +8,28 @@ import Dashboard from "./pages/Dashboard";
 import CheckIn from "./pages/CheckIn";
 import Staff from "./pages/Staff";
 import Analytics from "./pages/Analytics";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/check-in" element={<CheckIn />} />
-            <Route path="/staff" element={<Staff />} />
-            <Route path="/analytics" element={<Analytics />} />
-          </Routes>
-        </Layout>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/check-in" element={<CheckIn />} />
+              <Route path="/staff" element={<Staff />} />
+              <Route path="/analytics" element={<Analytics />} />
+            </Routes>
+          </Layout>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
