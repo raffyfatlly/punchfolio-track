@@ -35,7 +35,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="bg-gradient-to-br from-accent to-secondary border-r border-accent/20">
+    <Sidebar className="bg-gradient-to-br from-accent to-secondary border-r border-accent/20 [&[data-mobile]]:!bg-gradient-to-br [&[data-mobile]]:!from-accent [&[data-mobile]]:!to-secondary">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="px-2 text-secondary-foreground/80 font-semibold">
