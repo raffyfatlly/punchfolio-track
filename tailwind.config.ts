@@ -25,15 +25,15 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#7C77D1", // Purple from palette
+          DEFAULT: "#FF8BA7", // Soft pink from the design
           foreground: "#ffffff",
         },
         secondary: {
-          DEFAULT: "#FFB6C1", // Pink from palette
+          DEFAULT: "#FFC2D1", // Lighter pink from the design
           foreground: "#1e293b",
         },
         accent: {
-          DEFAULT: "#FFE5B4", // Soft yellow from palette
+          DEFAULT: "#FFE5E5", // Very light pink from the design
           foreground: "#1e293b",
         },
         destructive: {
@@ -41,7 +41,7 @@ export default {
           foreground: "hsl(var(--destructive-foreground))",
         },
         muted: {
-          DEFAULT: "#F3F3F3", // Light gray from palette
+          DEFAULT: "#F8F9FC", // Light gray from the design
           foreground: "#666666",
         },
         popover: {
