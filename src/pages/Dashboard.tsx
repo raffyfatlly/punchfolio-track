@@ -3,10 +3,78 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Users, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { parse, isAfter, isBefore, addMinutes } from "date-fns";
+
+const CLOCK_IN_TIME = "09:00";
+const EARLY_BUFFER = 20;
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Helper function to determine attendance status (same as in Analytics)
+  const getAttendanceStatus = (checkInTime: string) => {
+    const standardTime = parse(CLOCK_IN_TIME, "HH:mm", new Date());
+    const earlyTime = addMinutes(standardTime, -EARLY_BUFFER);
+    const actualTime = parse(checkInTime, "HH:mm", new Date());
+
+    if (isBefore(actualTime, earlyTime)) {
+      return "too-early";
+    } else if (isAfter(actualTime, standardTime)) {
+      return "late";
+    } else {
+      return "on-time";
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "on-time":
+        return "bg-green-100 text-green-800";
+      case "late":
+        return "bg-red-100 text-red-800";
+      case "too-early":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "on-time":
+        return "On Time";
+      case "late":
+        return "Late";
+      case "too-early":
+        return "Too Early";
+      default:
+        return status;
+    }
+  };
+
+  // Mock attendance data for the current user - in a real app, this would come from your backend
+  const userAttendanceData = [
+    {
+      id: 1,
+      date: "2024-03-20",
+      checkInTime: "08:45",
+      status: getAttendanceStatus("08:45"),
+    },
+    {
+      id: 2,
+      date: "2024-03-19",
+      checkInTime: "09:15",
+      status: getAttendanceStatus("09:15"),
+    },
+    {
+      id: 3,
+      date: "2024-03-18",
+      checkInTime: "08:50",
+      status: getAttendanceStatus("08:50"),
+    },
+  ];
   
   // Only show simplified view for staff
   if (user?.role === "staff") {
@@ -47,12 +115,33 @@ const Dashboard = () => {
           </div>
         </Card>
 
-        <div className="flex justify-center">
-          <div className="inline-flex items-center gap-2 text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            <span>Last check-in: Not available</span>
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Your Recent Attendance</h2>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Check-in Time</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {userAttendanceData.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell>{record.date}</TableCell>
+                    <TableCell>{record.checkInTime}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(record.status)}`}>
+                        {getStatusText(record.status)}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
-        </div>
+        </Card>
       </div>
     );
   }
