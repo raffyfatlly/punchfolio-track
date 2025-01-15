@@ -38,23 +38,29 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>
+          <SidebarGroupLabel className="px-2">
             {user?.role === "admin" ? "Management" : "Staff Portal"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton onClick={() => navigate(item.url)}>
+                  <SidebarMenuButton
+                    onClick={() => navigate(item.url)}
+                    className="flex items-center gap-3 px-2 py-2 w-full rounded-md hover:bg-accent"
+                  >
                     <item.icon className="w-5 h-5" />
-                    <span>{item.title}</span>
+                    <span className="font-medium">{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleLogout}>
+                <SidebarMenuButton
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 px-2 py-2 w-full rounded-md hover:bg-accent text-red-500 hover:text-red-600"
+                >
                   <LogOut className="w-5 h-5" />
-                  <span>Logout</span>
+                  <span className="font-medium">Logout</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
