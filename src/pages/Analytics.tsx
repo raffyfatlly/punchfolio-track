@@ -25,65 +25,43 @@ import {
 } from "@/components/ui/table";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { format, parse, isAfter, isBefore, addMinutes, parseISO } from "date-fns";
-
-const CLOCK_IN_TIME = "09:00"; // Standard clock-in time
-const EARLY_BUFFER = 20; // Minutes before clock-in time that are considered "on-time"
+import { format } from "date-fns";
 
 const Analytics = () => {
   const [selectedMonth, setSelectedMonth] = useState("march");
   const [nameFilter, setNameFilter] = useState("");
 
-  // Helper function to determine attendance status
-  const getAttendanceStatus = (checkInTime: string) => {
-    const standardTime = parse(CLOCK_IN_TIME, "HH:mm", new Date());
-    const earlyTime = addMinutes(standardTime, -EARLY_BUFFER);
-    const actualTime = parse(checkInTime, "HH:mm", new Date());
-
-    if (isBefore(actualTime, earlyTime)) {
-      return "too-early";
-    } else if (isAfter(actualTime, standardTime)) {
-      return "late";
-    } else {
-      return "on-time";
-    }
-  };
-
-  // Mock data - in a real app, this would come from your backend
+  // Mock data with dates on x-axis and times on y-axis
   const attendanceData = [
     { 
       id: 1,
       name: "John Doe",
       date: "2024-03-20",
       checkInTime: "08:45",
-      status: getAttendanceStatus("08:45"),
+      status: "on-time",
     },
     { 
       id: 2,
       name: "Jane Smith",
       date: "2024-03-20",
       checkInTime: "09:15",
-      status: getAttendanceStatus("09:15"),
+      status: "late",
     },
     { 
       id: 3,
       name: "Mike Johnson",
       date: "2024-03-20",
       checkInTime: "08:30",
-      status: getAttendanceStatus("08:30"),
+      status: "too-early",
     },
   ];
 
-  const hourlyData = [
-    { time: "8 AM", checkins: 12 },
-    { time: "9 AM", checkins: 28 },
-    { time: "10 AM", checkins: 15 },
-    { time: "11 AM", checkins: 8 },
-    { time: "12 PM", checkins: 20 },
-    { time: "1 PM", checkins: 25 },
-    { time: "2 PM", checkins: 18 },
-    { time: "3 PM", checkins: 10 },
-    { time: "4 PM", checkins: 5 },
+  // Reorganized data for the chart with dates on x-axis
+  const chartData = [
+    { date: "Mar 20", "08:00": 12, "09:00": 28, "10:00": 15 },
+    { date: "Mar 21", "08:00": 15, "09:00": 25, "10:00": 18 },
+    { date: "Mar 22", "08:00": 10, "09:00": 30, "10:00": 20 },
+    { date: "Mar 23", "08:00": 8, "09:00": 22, "10:00": 12 },
   ];
 
   // Filter attendance data based on name
@@ -100,13 +78,13 @@ const Analytics = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "on-time":
-        return "bg-green-100 text-green-800";
+        return "bg-secondary/20 text-secondary";
       case "late":
-        return "bg-red-100 text-red-800";
+        return "bg-primary/20 text-primary";
       case "too-early":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-accent/20 text-accent-foreground";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -124,18 +102,18 @@ const Analytics = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
+    <div className="space-y-6 bg-white p-6 rounded-lg">
+      <h1 className="text-3xl font-bold text-foreground">Analytics Dashboard</h1>
 
       <div className="flex flex-col md:flex-row gap-4">
         <Input
           placeholder="Filter by name..."
           value={nameFilter}
           onChange={(e) => setNameFilter(e.target.value)}
-          className="max-w-xs"
+          className="max-w-xs border-secondary/20"
         />
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="max-w-xs">
+          <SelectTrigger className="max-w-xs border-secondary/20">
             <SelectValue placeholder="Select month" />
           </SelectTrigger>
           <SelectContent>
@@ -147,68 +125,74 @@ const Analytics = () => {
       </div>
 
       <div className="grid md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <h3 className="text-lg font-medium">Total Check-ins</h3>
-          <p className="text-3xl font-bold">{totalRecords}</p>
+        <Card className="p-4 bg-white border-primary/20">
+          <h3 className="text-lg font-medium text-foreground">Total Check-ins</h3>
+          <p className="text-3xl font-bold text-primary">{totalRecords}</p>
         </Card>
-        <Card className="p-4">
-          <h3 className="text-lg font-medium">On Time</h3>
-          <p className="text-3xl font-bold text-green-500">{onTimeCount}</p>
+        <Card className="p-4 bg-white border-secondary/20">
+          <h3 className="text-lg font-medium text-foreground">On Time</h3>
+          <p className="text-3xl font-bold text-secondary">{onTimeCount}</p>
         </Card>
-        <Card className="p-4">
-          <h3 className="text-lg font-medium">Late</h3>
-          <p className="text-3xl font-bold text-red-500">{lateCount}</p>
+        <Card className="p-4 bg-white border-primary/20">
+          <h3 className="text-lg font-medium text-foreground">Late</h3>
+          <p className="text-3xl font-bold text-primary">{lateCount}</p>
         </Card>
-        <Card className="p-4">
-          <h3 className="text-lg font-medium">Too Early</h3>
-          <p className="text-3xl font-bold text-yellow-500">{tooEarlyCount}</p>
+        <Card className="p-4 bg-white border-secondary/20">
+          <h3 className="text-lg font-medium text-foreground">Too Early</h3>
+          <p className="text-3xl font-bold text-secondary">{tooEarlyCount}</p>
         </Card>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Today's Check-in Activity</h2>
+        <Card className="p-6 bg-white border-secondary/20">
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Check-in Activity</h2>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={hourlyData}>
+              <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-50" />
                 <XAxis 
-                  dataKey="time" 
-                  tick={{ fill: 'currentColor' }}
-                  tickLine={{ stroke: 'currentColor' }}
+                  dataKey="date" 
+                  stroke="currentColor"
                 />
                 <YAxis 
-                  tick={{ fill: 'currentColor' }}
-                  tickLine={{ stroke: 'currentColor' }}
-                  label={{ 
-                    value: 'Check-ins', 
-                    angle: -90, 
-                    position: 'insideLeft',
-                    fill: 'currentColor'
-                  }}
+                  stroke="currentColor"
+                  ticks={["08:00", "09:00", "10:00"]}
                 />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: 'var(--background)',
-                    border: '1px solid var(--border)',
+                    backgroundColor: 'white',
+                    border: '1px solid var(--secondary)',
                     borderRadius: '8px'
                   }}
                 />
                 <Line 
                   type="monotone" 
-                  dataKey="checkins" 
-                  stroke="var(--primary)" 
+                  dataKey="08:00"
+                  stroke="var(--primary)"
                   strokeWidth={2}
                   dot={{ fill: "var(--primary)" }}
-                  activeDot={{ r: 6, fill: "var(--primary)" }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="09:00"
+                  stroke="var(--secondary)"
+                  strokeWidth={2}
+                  dot={{ fill: "var(--secondary)" }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="10:00"
+                  stroke="var(--accent)"
+                  strokeWidth={2}
+                  dot={{ fill: "var(--accent)" }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Detailed Attendance Records</h2>
+        <Card className="p-6 bg-white border-primary/20">
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Detailed Attendance Records</h2>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -222,7 +206,7 @@ const Analytics = () => {
               <TableBody>
                 {filteredAttendance.map((record) => (
                   <TableRow key={record.id}>
-                    <TableCell>{record.name}</TableCell>
+                    <TableCell className="font-medium">{record.name}</TableCell>
                     <TableCell>{record.date}</TableCell>
                     <TableCell>{record.checkInTime}</TableCell>
                     <TableCell>
