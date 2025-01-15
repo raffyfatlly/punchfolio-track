@@ -34,11 +34,11 @@ export default {
           foreground: "#ffffff",
         },
         secondary: {
-          DEFAULT: "#FFC2D1",
-          foreground: "#1e293b",
+          DEFAULT: "#33C5C5", // Tiffany/teal color
+          foreground: "#ffffff",
         },
         accent: {
-          DEFAULT: "#FFE5E5",
+          DEFAULT: "#E6F9F9", // Soft teal background
           foreground: "#1e293b",
         },
         destructive: {
