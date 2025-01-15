@@ -38,7 +38,7 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-pink-50 p-4">
       <Card className="w-full max-w-md p-8 space-y-8 shadow-lg bg-white/80 backdrop-blur-sm rounded-[2rem] border-none">
         <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold text-slate-800">
             Welcome Back
           </h1>
           <p className="text-muted-foreground">
@@ -75,7 +75,7 @@ const Login = () => {
 
           <Button
             type="submit"
-            className="w-full h-12 text-base font-medium bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity rounded-2xl"
+            className="w-full h-12 text-base font-medium bg-primary hover:opacity-90 transition-opacity rounded-2xl"
           >
             Sign In
           </Button>
