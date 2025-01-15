@@ -1,10 +1,10 @@
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,7 +16,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, [user, location.pathname, navigate]);
 
   if (!user) {
-    return children;
+    return null;
   }
 
   return (
@@ -25,7 +25,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
         <main className="flex-1 p-6 bg-white">
           <SidebarTrigger />
-          {children}
+          <Outlet />
         </main>
       </div>
     </SidebarProvider>
