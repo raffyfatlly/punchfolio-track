@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Camera, Clock } from "lucide-react";
+import { Camera, Clock, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Dashboard = () => {
