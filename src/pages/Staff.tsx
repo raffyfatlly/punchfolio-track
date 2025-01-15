@@ -66,13 +66,13 @@ const Staff = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold text-foreground">
           Staff Management
         </h1>
         
         <Dialog>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-secondary hover:bg-secondary/90">
               <UserPlus className="mr-2 h-4 w-4" />
               Add Staff
             </Button>
@@ -115,7 +115,7 @@ const Staff = () => {
                   className="rounded-lg"
                 />
               </div>
-              <Button onClick={handleAddStaff} className="w-full rounded-lg">
+              <Button onClick={handleAddStaff} className="w-full rounded-lg bg-secondary hover:bg-secondary/90">
                 Add Staff Member
               </Button>
             </div>
@@ -125,10 +125,10 @@ const Staff = () => {
 
       <div className="grid md:grid-cols-2 gap-4">
         {staffList.map((staff) => (
-          <Card key={staff.id} className="p-4 rounded-[1rem] border-none bg-gradient-to-br from-white to-muted/20">
+          <Card key={staff.id} className="p-4 rounded-[1rem] border-none bg-gradient-to-br from-white to-accent/20">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
-                <h3 className="font-semibold">{staff.name}</h3>
+                <h3 className="font-semibold text-foreground">{staff.name}</h3>
                 <p className="text-sm text-muted-foreground">
                   {staff.position} - {staff.department}
                 </p>
