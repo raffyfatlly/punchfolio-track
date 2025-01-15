@@ -70,12 +70,12 @@ const CheckIn = () => {
         </p>
       </div>
       
-      <Card className="p-8 bg-gradient-to-br from-white to-muted/20">
+      <Card className="p-8 bg-gradient-to-br from-white to-muted/20 rounded-[2rem] border-none shadow-lg">
         <div className="space-y-6">
           {!stream && !photo && (
             <Button 
               onClick={startCamera} 
-              className="w-full h-16 text-lg bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
+              className="w-full h-16 text-lg bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity rounded-xl"
             >
               <Camera className="mr-2 h-6 w-6" />
               Start Camera
@@ -84,7 +84,7 @@ const CheckIn = () => {
 
           {stream && (
             <>
-              <div className="relative rounded-lg overflow-hidden shadow-lg">
+              <div className="relative rounded-2xl overflow-hidden shadow-lg border-4 border-accent">
                 <video
                   ref={videoRef}
                   autoPlay
@@ -94,7 +94,7 @@ const CheckIn = () => {
               </div>
               <Button 
                 onClick={takePhoto} 
-                className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
+                className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity rounded-xl"
               >
                 Take Photo
               </Button>
@@ -103,13 +103,13 @@ const CheckIn = () => {
 
           {photo && (
             <>
-              <div className="relative rounded-lg overflow-hidden shadow-lg">
+              <div className="relative rounded-2xl overflow-hidden shadow-lg border-4 border-accent">
                 <img src={photo} alt="Check-in" className="w-full" />
               </div>
               <Button 
                 onClick={resetCamera} 
                 variant="outline" 
-                className="w-full h-12 border-2"
+                className="w-full h-12 border-2 rounded-xl hover:bg-accent/20 transition-colors"
               >
                 <RefreshCcw className="mr-2 h-4 w-4" />
                 Take Another Photo
