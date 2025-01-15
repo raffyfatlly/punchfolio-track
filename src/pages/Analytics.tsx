@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -10,12 +10,16 @@ import {
 } from "recharts";
 
 const Analytics = () => {
-  const attendanceData = [
-    { day: "Mon", count: 45 },
-    { day: "Tue", count: 42 },
-    { day: "Wed", count: 48 },
-    { day: "Thu", count: 44 },
-    { day: "Fri", count: 40 },
+  const hourlyData = [
+    { time: "8 AM", checkins: 12 },
+    { time: "9 AM", checkins: 28 },
+    { time: "10 AM", checkins: 15 },
+    { time: "11 AM", checkins: 8 },
+    { time: "12 PM", checkins: 20 },
+    { time: "1 PM", checkins: 25 },
+    { time: "2 PM", checkins: 18 },
+    { time: "3 PM", checkins: 10 },
+    { time: "4 PM", checkins: 5 },
   ];
 
   const recentCheckIns = [
@@ -30,16 +34,42 @@ const Analytics = () => {
 
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Weekly Attendance</h2>
+          <h2 className="text-xl font-semibold mb-4">Today's Check-in Activity</h2>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={attendanceData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="#1e40af" />
-              </BarChart>
+              <LineChart data={hourlyData}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-50" />
+                <XAxis 
+                  dataKey="time" 
+                  tick={{ fill: 'currentColor' }}
+                  tickLine={{ stroke: 'currentColor' }}
+                />
+                <YAxis 
+                  tick={{ fill: 'currentColor' }}
+                  tickLine={{ stroke: 'currentColor' }}
+                  label={{ 
+                    value: 'Check-ins', 
+                    angle: -90, 
+                    position: 'insideLeft',
+                    fill: 'currentColor'
+                  }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'var(--background)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="checkins" 
+                  stroke="var(--primary)" 
+                  strokeWidth={2}
+                  dot={{ fill: "var(--primary)" }}
+                  activeDot={{ r: 6, fill: "var(--primary)" }}
+                />
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </Card>
