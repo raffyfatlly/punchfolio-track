@@ -70,7 +70,7 @@ const CheckIn = () => {
         </p>
       </div>
       
-      <Card className="p-8 bg-gradient-to-br from-white to-muted/20 rounded-[2rem] border-none shadow-lg">
+      <Card className="p-8 bg-gradient-to-br from-white to-accent/20 rounded-[2rem] border-none shadow-lg">
         <div className="space-y-6">
           {!stream && !photo && (
             <Button 
