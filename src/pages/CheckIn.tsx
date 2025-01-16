@@ -14,7 +14,7 @@ const CheckIn = () => {
   const [photo, setPhoto] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user } = useAuth();  // Get the authenticated user
+  const { user } = useAuth();
 
   const startCamera = async () => {
     try {
@@ -59,7 +59,7 @@ const CheckIn = () => {
         const malaysiaDate = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'yyyy-MM-dd');
         const malaysiaTime = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'HH:mm');
         
-        // Create and save new attendance record
+        // Create and save new attendance record with correct status type
         const newRecord = {
           id: Date.now(),
           name: user.name,
@@ -67,7 +67,7 @@ const CheckIn = () => {
           checkInTime: malaysiaTime,
           status: malaysiaTime <= "09:00" ? "on-time" : "late",
           photo: photoData
-        };
+        } as const;  // Using const assertion to ensure type safety
 
         attendanceService.saveRecord(newRecord);
         
