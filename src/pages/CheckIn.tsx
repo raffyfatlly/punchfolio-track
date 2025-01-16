@@ -52,11 +52,14 @@ const CheckIn = () => {
         audio: false
       });
       
-      console.log("Camera access granted");
+      console.log("Camera access granted, tracks:", mediaStream.getTracks());
       setStream(mediaStream);
 
       if (videoRef.current) {
+        console.log("Setting video source...");
         videoRef.current.srcObject = mediaStream;
+        console.log("Video element ready state:", videoRef.current.readyState);
+        
         await videoRef.current.play().catch(err => {
           console.error("Error playing video:", err);
           toast({
@@ -65,6 +68,10 @@ const CheckIn = () => {
             variant: "destructive",
           });
         });
+        
+        console.log("Video playback started");
+      } else {
+        console.error("Video element reference not found");
       }
     } catch (error) {
       console.error("Camera access error:", error);
@@ -236,15 +243,16 @@ const CheckIn = () => {
 
           {stream && (
             <>
-              <div className="relative w-full h-[400px] rounded-2xl overflow-hidden shadow-lg border-4 border-accent">
+              <div className="relative w-full h-[400px] rounded-2xl overflow-hidden shadow-lg border-4 border-accent bg-black">
                 <video
                   ref={videoRef}
                   autoPlay
                   playsInline
                   muted
-                  className="absolute top-0 left-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover"
                   style={{
-                    transform: 'scaleX(-1)'
+                    transform: 'scaleX(-1)',
+                    display: 'block'
                   }}
                 />
               </div>
