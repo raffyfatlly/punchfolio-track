@@ -42,7 +42,7 @@ interface StaffMember {
 }
 
 const Analytics = () => {
-  const [selectedMonth, setSelectedMonth] = useState("march");
+  const [selectedMonth, setSelectedMonth] = useState("03"); // Changed to use month numbers
   const [selectedName, setSelectedName] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -71,14 +71,14 @@ const Analytics = () => {
     { 
       id: 3,
       name: "Mike Johnson",
-      date: "2024-03-20",
+      date: "2024-02-20",
       checkInTime: "08:30",
       status: "on-time" as const,
     },
     { 
       id: 4,
       name: "John Doe",
-      date: "2024-03-21",
+      date: "2024-01-21",
       checkInTime: "08:30",
       status: "on-time" as const,
     },
@@ -104,12 +104,15 @@ const Analytics = () => {
     [staffNames]
   );
 
-  // Filter attendance data based on name
+  // Filter attendance data based on name and month
   const filteredAttendance = useMemo(() => 
-    attendanceData.filter(record =>
-      selectedName === "all" ? true : record.name === selectedName
-    ),
-    [selectedName, attendanceData]
+    attendanceData.filter(record => {
+      const matchesName = selectedName === "all" ? true : record.name === selectedName;
+      const recordMonth = record.date.split('-')[1]; // Extract month from date
+      const matchesMonth = selectedMonth === "all" ? true : recordMonth === selectedMonth;
+      return matchesName && matchesMonth;
+    }),
+    [selectedName, selectedMonth, attendanceData]
   );
 
   // Calculate pagination
@@ -157,9 +160,19 @@ const Analytics = () => {
             <SelectValue placeholder="Select month" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="january">January</SelectItem>
-            <SelectItem value="february">February</SelectItem>
-            <SelectItem value="march">March</SelectItem>
+            <SelectItem value="all">All Months</SelectItem>
+            <SelectItem value="01">January</SelectItem>
+            <SelectItem value="02">February</SelectItem>
+            <SelectItem value="03">March</SelectItem>
+            <SelectItem value="04">April</SelectItem>
+            <SelectItem value="05">May</SelectItem>
+            <SelectItem value="06">June</SelectItem>
+            <SelectItem value="07">July</SelectItem>
+            <SelectItem value="08">August</SelectItem>
+            <SelectItem value="09">September</SelectItem>
+            <SelectItem value="10">October</SelectItem>
+            <SelectItem value="11">November</SelectItem>
+            <SelectItem value="12">December</SelectItem>
           </SelectContent>
         </Select>
       </div>
