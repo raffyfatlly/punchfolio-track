@@ -82,14 +82,15 @@ export const AttendanceTable = ({ profileId, limit }: Props) => {
     refetchOnWindowFocus: true,
     refetchInterval: 5000,
     retry: 2,
-    onError: (error) => {
-      console.error('Query error:', error);
-      toast({
-        title: "Error loading attendance records",
-        description: "Please try refreshing the page",
-        variant: "destructive",
-      });
-    },
+    meta: {
+      onError: () => {
+        toast({
+          title: "Error loading attendance records",
+          description: "Please try refreshing the page",
+          variant: "destructive",
+        });
+      }
+    }
   });
 
   if (error) {
