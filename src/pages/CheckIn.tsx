@@ -45,10 +45,9 @@ const CheckIn = () => {
       console.log("Requesting camera access...");
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
-          width: { min: 640, ideal: 1280, max: 1920 },
-          height: { min: 480, ideal: 720, max: 1080 },
-          facingMode: "user",
-          aspectRatio: { ideal: 1.7777777778 }
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: "user"
         },
         audio: false
       });
@@ -57,9 +56,11 @@ const CheckIn = () => {
       setStream(mediaStream);
 
       if (videoRef.current) {
-        console.log("Setting video source");
         videoRef.current.srcObject = mediaStream;
-        await videoRef.current.play();
+        // Wait for video to be ready before playing
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(console.error);
+        };
       }
     } catch (error) {
       console.error("Camera access error:", error);
