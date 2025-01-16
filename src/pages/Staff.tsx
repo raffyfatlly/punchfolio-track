@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -23,46 +23,116 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserPlus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { staffService, type StaffMember } from "@/services/storageService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Staff = () => {
-  const [staffList, setStaffList] = useState<StaffMember[]>(() => staffService.getAllStaff());
   const [newStaff, setNewStaff] = useState({
     name: "",
-    position: "",
     department: "",
+    role: "staff" as const,
   });
 
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Update local storage when staffList changes
-  useEffect(() => {
-    const currentStaff = staffService.getAllStaff();
-    if (JSON.stringify(currentStaff) !== JSON.stringify(staffList)) {
-      staffService.addStaffMember(newStaff);
-    }
-  }, [staffList]);
+  // Fetch staff profiles from Supabase
+  const { data: staffList, isLoading } = useQuery({
+    queryKey: ['staffProfiles'],
+    queryFn: async () => {
+      console.log('Fetching staff profiles...');
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching staff profiles:', error);
+        toast({
+          title: "Error loading staff profiles",
+          description: "Please try refreshing the page",
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
+      console.log('Fetched staff profiles:', data);
+      return data;
+    },
+  });
 
-  const handleAddStaff = () => {
-    if (newStaff.name && newStaff.position && newStaff.department) {
-      staffService.addStaffMember(newStaff);
-      setStaffList(staffService.getAllStaff());
-      setNewStaff({ name: "", position: "", department: "" });
+  // Add new staff member mutation
+  const addStaffMutation = useMutation({
+    mutationFn: async (newStaffData: typeof newStaff) => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert([newStaffData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['staffProfiles'] });
       toast({
         title: "Staff member added",
         description: `${newStaff.name} has been added to the staff list.`,
       });
+      setNewStaff({ name: "", department: "", role: "staff" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error adding staff member",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete staff member mutation
+  const deleteStaffMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['staffProfiles'] });
+      toast({
+        title: "Staff member removed",
+        description: "The staff member has been removed from the list.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error removing staff member",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAddStaff = () => {
+    if (newStaff.name && newStaff.department) {
+      addStaffMutation.mutate(newStaff);
     }
   };
 
   const handleDeleteStaff = (id: number, name: string) => {
-    staffService.deleteStaffMember(id);
-    setStaffList(staffService.getAllStaff());
-    toast({
-      title: "Staff member removed",
-      description: `${name} has been removed from the staff list.`,
-    });
+    deleteStaffMutation.mutate(id);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -95,17 +165,6 @@ const Staff = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="position">Position</Label>
-                <Input
-                  id="position"
-                  value={newStaff.position}
-                  onChange={(e) =>
-                    setNewStaff({ ...newStaff, position: e.target.value })
-                  }
-                  className="rounded-lg"
-                />
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
                 <Input
                   id="department"
@@ -116,8 +175,12 @@ const Staff = () => {
                   className="rounded-lg"
                 />
               </div>
-              <Button onClick={handleAddStaff} className="w-full rounded-lg bg-secondary hover:bg-secondary/90">
-                Add Staff Member
+              <Button 
+                onClick={handleAddStaff} 
+                className="w-full rounded-lg bg-secondary hover:bg-secondary/90"
+                disabled={addStaffMutation.isPending}
+              >
+                {addStaffMutation.isPending ? "Adding..." : "Add Staff Member"}
               </Button>
             </div>
           </DialogContent>
@@ -125,18 +188,23 @@ const Staff = () => {
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        {staffList.map((staff) => (
+        {staffList?.map((staff) => (
           <Card key={staff.id} className="p-4 rounded-[1rem] border-none bg-gradient-to-br from-white to-accent/20">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
                 <h3 className="font-semibold text-foreground">{staff.name}</h3>
                 <p className="text-sm text-muted-foreground">
-                  {staff.position} - {staff.department}
+                  {staff.department} - {staff.role}
                 </p>
               </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    disabled={deleteStaffMutation.isPending}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </AlertDialogTrigger>
