@@ -83,11 +83,11 @@ const CheckIn = () => {
             .from('attendance_photos')
             .getPublicUrl(fileName);
 
-          // Create attendance record
+          // Create attendance record - Convert user.id to number
           const { error: insertError } = await supabase
             .from('attendance')
             .insert({
-              profile_id: user.id,
+              profile_id: parseInt(user.id),  // Convert string ID to number
               date: malaysiaDate,
               check_in_time: malaysiaTime,
               status: malaysiaTime <= "09:00" ? "on-time" : "late",
