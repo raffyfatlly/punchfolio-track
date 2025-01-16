@@ -14,13 +14,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const staffMembers = [
-  { id: "1", name: "John Doe", role: "staff" },
-  { id: "2", name: "Jane Smith", role: "staff" },
-  { id: "3", name: "Mike Johnson", role: "staff" },
-  { id: "4", name: "Sarah Williams", role: "staff" },
-  { id: "5", name: "Tom Brown", role: "admin" },
-];
+interface StaffMember {
+  id: number;
+  name: string;
+  position: string;
+  department: string;
+}
+
+const STORAGE_KEY = 'staff-list';
 
 const Login = () => {
   const [selectedStaff, setSelectedStaff] = useState("");
@@ -28,6 +29,18 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Get staff list from localStorage
+  const staffList = (() => {
+    const savedStaff = localStorage.getItem(STORAGE_KEY);
+    const staffMembers: StaffMember[] = savedStaff ? JSON.parse(savedStaff) : [];
+    
+    // Add admin to the list
+    return [
+      { id: 0, name: "Admin", position: "Administrator", department: "Management" },
+      ...staffMembers
+    ];
+  })();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,9 +55,11 @@ const Login = () => {
     }
 
     if (password === "staff123") {
-      const staffMember = staffMembers.find(staff => staff.id === selectedStaff);
+      const staffMember = staffList.find(staff => staff.id.toString() === selectedStaff);
       if (staffMember) {
-        login(staffMember.name, password, staffMember.role as "staff" | "admin");
+        // Set role as admin only for the Admin user, staff for others
+        const role = staffMember.name === "Admin" ? "admin" : "staff";
+        login(staffMember.name, password, role);
         toast({
           title: "Welcome back! 👋",
           description: "Successfully logged in",
@@ -81,8 +96,8 @@ const Login = () => {
                   <SelectValue placeholder="Select staff member" />
                 </SelectTrigger>
                 <SelectContent>
-                  {staffMembers.map((staff) => (
-                    <SelectItem key={staff.id} value={staff.id}>
+                  {staffList.map((staff) => (
+                    <SelectItem key={staff.id} value={staff.id.toString()}>
                       {staff.name}
                     </SelectItem>
                   ))}
