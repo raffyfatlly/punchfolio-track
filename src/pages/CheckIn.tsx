@@ -55,9 +55,14 @@ const CheckIn = () => {
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        console.log("Video element setup complete");
-        await videoRef.current.play();
-        console.log("Video playback started");
+        videoRef.current.onloadedmetadata = async () => {
+          try {
+            await videoRef.current?.play();
+            console.log("Video playback started");
+          } catch (err) {
+            console.error("Error playing video:", err);
+          }
+        };
       }
     } catch (error) {
       console.error("Camera access error:", error);
@@ -235,7 +240,7 @@ const CheckIn = () => {
                   autoPlay
                   playsInline
                   muted
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="w-full h-full object-cover"
                 />
               </div>
               <Button 
