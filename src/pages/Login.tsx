@@ -37,26 +37,8 @@ const Login = () => {
         setIsLoading(true);
         console.log('Fetching staff list...');
         
-        // First, ensure we have a session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          throw sessionError;
-        }
-
-        // If no session, create an anonymous session
-        if (!session) {
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email: 'anonymous@example.com',
-            password: 'staff123',
-          });
-          
-          if (signInError) {
-            throw signInError;
-          }
-        }
-
-        // Now fetch the profiles
+        // Fetch profiles directly - we don't need to authenticate first because
+        // the profiles table has an RLS policy allowing public access for SELECT
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
