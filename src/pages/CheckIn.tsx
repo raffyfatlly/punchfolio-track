@@ -24,11 +24,9 @@ const CheckIn = () => {
     }
   }, [user, navigate]);
 
-  // Only cleanup when component unmounts
   useEffect(() => {
     return () => {
       if (stream) {
-        console.log("Cleaning up camera stream on unmount");
         stream.getTracks().forEach(track => track.stop());
       }
     };
@@ -46,7 +44,11 @@ const CheckIn = () => {
 
       console.log("Requesting camera access...");
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: "user"
+        },
         audio: false
       });
       
@@ -55,14 +57,14 @@ const CheckIn = () => {
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        videoRef.current.onloadedmetadata = async () => {
-          try {
-            await videoRef.current?.play();
-            console.log("Video playback started");
-          } catch (err) {
-            console.error("Error playing video:", err);
-          }
-        };
+        videoRef.current.play().catch(err => {
+          console.error("Error starting video stream:", err);
+          toast({
+            title: "Camera Error",
+            description: "Failed to start video stream. Please try again.",
+            variant: "destructive",
+          });
+        });
       }
     } catch (error) {
       console.error("Camera access error:", error);
@@ -240,7 +242,12 @@ const CheckIn = () => {
                   autoPlay
                   playsInline
                   muted
-                  className="w-full h-full object-cover"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transform: 'scaleX(-1)' // Mirror the camera feed
+                  }}
                 />
               </div>
               <Button 
@@ -256,7 +263,12 @@ const CheckIn = () => {
           {photo && (
             <>
               <div className="relative rounded-2xl overflow-hidden shadow-lg border-4 border-accent">
-                <img src={photo} alt="Check-in" className="w-full" />
+                <img 
+                  src={photo} 
+                  alt="Check-in" 
+                  className="w-full"
+                  style={{ transform: 'scaleX(-1)' }} // Mirror the photo to match camera feed
+                />
               </div>
               <Button 
                 onClick={resetCamera}
