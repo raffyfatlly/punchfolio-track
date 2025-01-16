@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
+import { useToast } from "@/components/ui/use-toast";
 
 type UserRole = "staff" | "admin";
 
@@ -12,7 +13,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string, role: UserRole) => void;
+  login: (username: string, password: string, role: UserRole) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -23,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Get initial session
@@ -69,6 +71,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (username: string, password: string, role: UserRole) => {
     try {
+      console.log('Attempting login for:', username);
+      
       // For demo purposes, just set the user directly without Supabase auth
       if (password === "staff123") {
         const { data: selectedStaff, error } = await supabase
@@ -79,17 +83,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (error) {
           console.error('Error fetching staff:', error);
+          toast({
+            title: "Login Error",
+            description: "Failed to find staff member",
+            variant: "destructive",
+          });
           throw new Error("Failed to find staff member");
         }
 
         if (selectedStaff) {
+          console.log('Found staff member:', selectedStaff);
           setUser({
             id: selectedStaff.id,  // This is now correctly a number from the database
             name: username,
             role: role,
           });
+          toast({
+            title: "Success",
+            description: "Successfully logged in",
+          });
         }
       } else {
+        toast({
+          title: "Login Error",
+          description: "Invalid password",
+          variant: "destructive",
+        });
         throw new Error("Invalid password");
       }
     } catch (error) {
@@ -100,6 +119,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     setUser(null);
+    toast({
+      title: "Logged out",
+      description: "Successfully logged out",
+    });
   };
 
   return (
