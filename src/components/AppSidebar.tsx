@@ -1,4 +1,4 @@
-import { Menu, UserRound, UserCheck, UserPlus, UserMinus, UserX, LogOut } from "lucide-react";
+import { Menu, UserRound, UserCheck, LogOut } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -12,14 +12,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
-const staffIcons = {
-  "John Doe": { icon: UserRound, color: "text-staff-blue" },
-  "Jane Smith": { icon: UserCheck, color: "text-staff-purple" },
-  "Mike Johnson": { icon: UserPlus, color: "text-staff-orange" },
-  "Sarah Williams": { icon: UserMinus, color: "text-staff-green" },
-  "Tom Brown": { icon: UserX, color: "text-staff-red" },
-};
-
 export function AppSidebar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -32,7 +24,7 @@ export function AppSidebar() {
   const adminItems = [
     { title: "Dashboard", url: "/", icon: Menu },
     { title: "Staff", url: "/staff", icon: UserRound },
-    { title: "Analytics", url: "/analytics", icon: UserPlus },
+    { title: "Analytics", url: "/analytics", icon: UserCheck },
   ];
 
   const items = user?.role === "admin" ? adminItems : staffItems;
