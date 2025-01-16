@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Camera, RefreshCcw, CameraOff } from "lucide-react";
+import { Camera, RefreshCcw, CameraOff, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { formatInTimeZone } from 'date-fns-tz';
@@ -94,40 +94,45 @@ const CheckIn = () => {
     }
   };
 
-  const takePhoto = async () => {
-    if (!user?.id) {
+  const takePhoto = () => {
+    if (!videoRef.current) {
       toast({
         title: "Error",
-        description: "You must be logged in to check in.",
+        description: "Camera not initialized",
         variant: "destructive",
       });
       return;
     }
 
-    if (isSubmitting) {
+    const canvas = document.createElement("canvas");
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext("2d");
+    
+    if (!ctx) {
+      throw new Error("Could not get canvas context");
+    }
+
+    ctx.drawImage(videoRef.current, 0, 0);
+    const photoData = canvas.toDataURL("image/jpeg");
+    setPhoto(photoData);
+    stopCamera();
+  };
+
+  const submitAttendance = async () => {
+    if (!user?.id || !photo) {
+      toast({
+        title: "Error",
+        description: "Missing required information",
+        variant: "destructive",
+      });
       return;
     }
 
+    if (isSubmitting) return;
+
     try {
       setIsSubmitting(true);
-
-      if (!videoRef.current) {
-        throw new Error("Camera not initialized");
-      }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const ctx = canvas.getContext("2d");
-      
-      if (!ctx) {
-        throw new Error("Could not get canvas context");
-      }
-
-      ctx.drawImage(videoRef.current, 0, 0);
-      const photoData = canvas.toDataURL("image/jpeg");
-      setPhoto(photoData);
-      stopCamera();
 
       // Get current date and time in Malaysia timezone
       const now = new Date();
@@ -135,7 +140,7 @@ const CheckIn = () => {
       const malaysiaTime = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'HH:mm');
       
       // Convert base64 to blob
-      const base64Data = photoData.split(',')[1];
+      const base64Data = photo.split(',')[1];
       const byteCharacters = atob(base64Data);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -270,10 +275,9 @@ const CheckIn = () => {
               <div className="flex gap-4">
                 <Button 
                   onClick={takePhoto}
-                  disabled={isSubmitting}
                   className="flex-1 h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity rounded-xl"
                 >
-                  {isSubmitting ? "Processing..." : "Take Photo"}
+                  Take Photo
                 </Button>
                 <Button
                   onClick={stopCamera}
@@ -296,15 +300,25 @@ const CheckIn = () => {
                   style={{ transform: 'scaleX(-1)' }}
                 />
               </div>
-              <Button 
-                onClick={resetCamera}
-                disabled={isSubmitting}
-                variant="outline"
-                className="w-full h-12 border-2 rounded-xl hover:bg-accent/20 transition-colors"
-              >
-                <RefreshCcw className="mr-2 h-4 w-4" />
-                Take Another Photo
-              </Button>
+              <div className="flex gap-4">
+                <Button 
+                  onClick={submitAttendance}
+                  disabled={isSubmitting}
+                  className="flex-1 h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity rounded-xl"
+                >
+                  <Check className="mr-2 h-5 w-5" />
+                  {isSubmitting ? "Submitting..." : "Confirm & Submit"}
+                </Button>
+                <Button
+                  onClick={resetCamera}
+                  variant="outline"
+                  disabled={isSubmitting}
+                  className="flex-1 h-12 border-2 rounded-xl hover:bg-accent/20 transition-colors"
+                >
+                  <X className="mr-2 h-5 w-5" />
+                  Retake Photo
+                </Button>
+              </div>
             </>
           )}
         </div>
