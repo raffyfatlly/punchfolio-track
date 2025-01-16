@@ -86,7 +86,7 @@ const Dashboard = () => {
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-semibold">Check In</h2>
               <p className="text-muted-foreground">
-                Quick and easy attendance recording
+                Record your attendance
               </p>
             </div>
           </div>
