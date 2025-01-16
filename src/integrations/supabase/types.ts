@@ -23,7 +23,7 @@ export type Database = {
           check_in_time: string
           created_at?: string
           date: string
-          id?: number
+          id?: never
           photo?: string | null
           profile_id: number
           status: string
@@ -32,7 +32,7 @@ export type Database = {
           check_in_time?: string
           created_at?: string
           date?: string
-          id?: number
+          id?: never
           photo?: string | null
           profile_id?: number
           status?: string
@@ -58,14 +58,14 @@ export type Database = {
         Insert: {
           created_at?: string
           department?: string | null
-          id?: number
+          id?: never
           name: string
           role?: string
         }
         Update: {
           created_at?: string
           department?: string | null
-          id?: number
+          id?: never
           name?: string
           role?: string
         }

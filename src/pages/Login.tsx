@@ -15,10 +15,17 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 
+interface Staff {
+  id: number;
+  name: string;
+  role: "staff" | "admin";
+  department: string | null;
+}
+
 const Login = () => {
   const [selectedStaff, setSelectedStaff] = useState("");
   const [password, setPassword] = useState("");
-  const [staffList, setStaffList] = useState<any[]>([]);
+  const [staffList, setStaffList] = useState<Staff[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -30,14 +37,14 @@ const Login = () => {
         console.log('Fetching staff list...');
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, name, role');
+          .select('id, name, role, department');
         
         if (error) {
           console.error('Supabase error:', error);
           throw error;
         }
 
-        console.log('Fetched staff:', data); // Add this line to debug
+        console.log('Fetched staff:', data);
 
         if (!data) {
           console.log('No data returned from Supabase');
@@ -81,7 +88,7 @@ const Login = () => {
     if (password === "staff123") {
       const staffMember = staffList.find(staff => staff.id.toString() === selectedStaff);
       if (staffMember) {
-        login(staffMember.name, password, staffMember.role as "staff" | "admin");
+        login(staffMember.name, password, staffMember.role);
         toast({
           title: "Welcome back! 👋",
           description: "Successfully logged in",
