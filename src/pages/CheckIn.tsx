@@ -1,10 +1,10 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Camera, RefreshCcw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { formatInTimeZone } from 'date-fns-tz';
 
 const CheckIn = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -42,21 +42,18 @@ const CheckIn = () => {
         setPhoto(photoData);
         stopCamera();
         
-        // Get current mock date and time
-        const currentDate = new Date('2025-03-21');
-        const currentTime = new Date('2025-03-21').toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: false 
-        });
+        // Get current date and time in Malaysia timezone
+        const now = new Date();
+        const malaysiaDate = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'yyyy-MM-dd');
+        const malaysiaTime = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'HH:mm');
         
-        // Create new attendance record with current timestamp
+        // Create new attendance record with current Malaysia timestamp
         const newRecord = {
           id: Date.now(),
           name: "John Doe", // This should come from auth context in a real app
-          date: format(currentDate, 'yyyy-MM-dd'),
-          checkInTime: currentTime,
-          status: currentTime <= "09:00" ? "on-time" : "late"
+          date: malaysiaDate,
+          checkInTime: malaysiaTime,
+          status: malaysiaTime <= "09:00" ? "on-time" : "late"
         };
 
         // Get existing records
@@ -67,7 +64,7 @@ const CheckIn = () => {
         
         toast({
           title: "Check-in Successful",
-          description: `Time recorded: ${currentTime}`,
+          description: `Time recorded: ${malaysiaTime} (MYT)`,
         });
 
         // Redirect to dashboard after 2 seconds
