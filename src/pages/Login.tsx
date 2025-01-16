@@ -22,7 +22,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Get staff list using our service
+  // Get staff list directly from storage service
   const staffList = staffService.getAllStaff();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -40,7 +40,7 @@ const Login = () => {
     if (password === "staff123") {
       const staffMember = staffList.find(staff => staff.id.toString() === selectedStaff);
       if (staffMember) {
-        const role = staffMember.name === "Admin" ? "admin" : "staff";
+        const role = staffMember.id === 0 ? "admin" : "staff";
         login(staffMember.name, password, role);
         toast({
           title: "Welcome back! 👋",
