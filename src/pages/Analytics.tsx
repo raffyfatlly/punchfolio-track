@@ -46,7 +46,7 @@ interface DateGroups {
 
 const Analytics = () => {
   const [selectedMonth, setSelectedMonth] = useState("march");
-  const [selectedName, setSelectedName] = useState("");
+  const [selectedName, setSelectedName] = useState("all"); // Changed initial value to "all"
 
   // Mock data with dates on x-axis and times on y-axis
   const attendanceData: AttendanceRecord[] = [
@@ -103,7 +103,7 @@ const Analytics = () => {
   // Filter attendance data based on name
   const filteredAttendance = useMemo(() => 
     attendanceData.filter(record =>
-      selectedName ? record.name === selectedName : true
+      selectedName === "all" ? true : record.name === selectedName // Changed condition
     ),
     [selectedName, attendanceData]
   );
@@ -172,7 +172,7 @@ const Analytics = () => {
             <SelectValue placeholder="Filter by name" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Names</SelectItem>
+            <SelectItem value="all">All Names</SelectItem>
             {uniqueNames.map((name) => (
               <SelectItem key={name} value={name}>
                 {name}
