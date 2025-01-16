@@ -70,31 +70,40 @@ const CheckIn = () => {
           const byteArray = new Uint8Array(byteNumbers);
           const blob = new Blob([byteArray], { type: 'image/jpeg' });
 
-          // Upload photo to Supabase Storage
+          // Upload photo to Supabase Storage with authenticated client
           const fileName = `${user.id}_${Date.now()}.jpg`;
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('attendance_photos')
-            .upload(fileName, blob);
+            .upload(fileName, blob, {
+              cacheControl: '3600',
+              upsert: false
+            });
 
-          if (uploadError) throw uploadError;
+          if (uploadError) {
+            console.error('Upload error:', uploadError);
+            throw uploadError;
+          }
 
           // Get the public URL of the uploaded photo
           const { data: { publicUrl } } = supabase.storage
             .from('attendance_photos')
             .getPublicUrl(fileName);
 
-          // Create attendance record - Convert user.id to number
+          // Create attendance record
           const { error: insertError } = await supabase
             .from('attendance')
             .insert({
-              profile_id: parseInt(user.id),  // Convert string ID to number
+              profile_id: parseInt(user.id),
               date: malaysiaDate,
               check_in_time: malaysiaTime,
               status: malaysiaTime <= "09:00" ? "on-time" : "late",
               photo: publicUrl
             });
 
-          if (insertError) throw insertError;
+          if (insertError) {
+            console.error('Insert error:', insertError);
+            throw insertError;
+          }
 
           toast({
             title: "Check-in Successful",
