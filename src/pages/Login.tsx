@@ -15,10 +15,11 @@ import {
 } from "@/components/ui/select";
 
 const staffMembers = [
-  { id: "1", name: "John Doe" },
-  { id: "2", name: "Jane Smith" },
-  { id: "3", name: "Mike Johnson" },
-  { id: "4", name: "Sarah Williams" },
+  { id: "1", name: "John Doe", role: "staff" },
+  { id: "2", name: "Jane Smith", role: "staff" },
+  { id: "3", name: "Mike Johnson", role: "staff" },
+  { id: "4", name: "Sarah Williams", role: "staff" },
+  { id: "5", name: "Tom Brown", role: "admin" },
 ];
 
 const Login = () => {
@@ -42,12 +43,14 @@ const Login = () => {
 
     if (password === "staff123") {
       const staffMember = staffMembers.find(staff => staff.id === selectedStaff);
-      login(staffMember?.name || "", password);
-      toast({
-        title: "Welcome back! 👋",
-        description: "Successfully logged in",
-      });
-      navigate("/");
+      if (staffMember) {
+        login(staffMember.name, password, staffMember.role as "staff" | "admin");
+        toast({
+          title: "Welcome back! 👋",
+          description: "Successfully logged in",
+        });
+        navigate("/");
+      }
     } else {
       toast({
         title: "Login failed",

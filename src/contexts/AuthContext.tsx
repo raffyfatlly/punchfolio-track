@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 
-type UserRole = "staff";
+type UserRole = "staff" | "admin";
 
 interface User {
   id: string;
@@ -10,7 +10,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string) => void;
+  login: (username: string, password: string, role: UserRole) => void;
   logout: () => void;
 }
 
@@ -19,12 +19,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
-  const login = (username: string, password: string) => {
+  const login = (username: string, password: string, role: UserRole) => {
     if (password === "staff123") {
       setUser({
         id: Math.random().toString(36).substr(2, 9),
         name: username,
-        role: "staff",
+        role: role,
       });
     }
   };
