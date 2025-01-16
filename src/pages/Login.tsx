@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,17 +13,45 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { staffService } from "@/services/storageService";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [selectedStaff, setSelectedStaff] = useState("");
   const [password, setPassword] = useState("");
-  const { login, isLoading } = useAuth();
+  const [staffList, setStaffList] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Get staff list directly from storage service
-  const staffList = staffService.getAllStaff();
+  // Fetch staff list from Supabase
+  useEffect(() => {
+    async function fetchStaffList() {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('name');
+        
+        if (error) {
+          throw error;
+        }
+
+        setStaffList(data || []);
+      } catch (error) {
+        console.error('Error fetching staff:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load staff members",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchStaffList();
+  }, [toast]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,8 +68,7 @@ const Login = () => {
     if (password === "staff123") {
       const staffMember = staffList.find(staff => staff.id.toString() === selectedStaff);
       if (staffMember) {
-        const role = staffMember.id === 0 ? "admin" : "staff";
-        login(staffMember.name, password, role);
+        login(staffMember.name, password, staffMember.role as "staff" | "admin");
         toast({
           title: "Welcome back! 👋",
           description: "Successfully logged in",
@@ -57,7 +84,6 @@ const Login = () => {
     }
   };
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-pink-50">
