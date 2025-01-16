@@ -179,7 +179,8 @@ const Analytics = () => {
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', { 
       month: 'short', 
-      day: 'numeric' 
+      day: 'numeric',
+      year: 'numeric'
     });
   };
 
@@ -192,8 +193,8 @@ const Analytics = () => {
     });
   };
 
-  // Generate time ticks for Y-axis
-  const timeTicks = ["07:00", "08:00", "09:00", "10:00", "11:00"];
+  // Generate time ticks for Y-axis (from 7 AM to 11 AM)
+  const timeTicks = ["07:00", "07:30", "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00"];
 
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg">
@@ -247,16 +248,17 @@ const Analytics = () => {
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="p-6 bg-white border-secondary/20">
           <h2 className="text-xl font-semibold mb-4 text-foreground">Check-in Activity</h2>
-          <div className="h-[300px]">
+          <div className="h-[400px]"> {/* Increased height for better visibility */}
             <ResponsiveContainer width="100%" height="100%">
               <LineChart 
                 data={chartData}
-                margin={{ top: 20, right: 30, left: 50, bottom: 20 }}
+                margin={{ top: 20, right: 30, left: 60, bottom: 40 }} // Adjusted margins
               >
                 <CartesianGrid 
                   strokeDasharray="3 3" 
-                  className="opacity-30"
                   stroke="var(--secondary)"
+                  opacity={0.2}
+                  vertical={false} // Only show horizontal grid lines
                 />
                 <XAxis 
                   dataKey="date" 
@@ -265,11 +267,14 @@ const Analytics = () => {
                   tick={{ fill: 'var(--foreground)', fontSize: 12 }}
                   tickLine={{ stroke: 'var(--secondary)' }}
                   axisLine={{ stroke: 'var(--secondary)' }}
+                  dy={10} // Move labels down slightly
                   label={{ 
                     value: 'Date', 
                     position: 'bottom',
-                    offset: 0,
-                    fill: 'var(--foreground)'
+                    offset: 20,
+                    fill: 'var(--foreground)',
+                    fontSize: 14,
+                    fontWeight: 500
                   }}
                 />
                 <YAxis 
@@ -279,12 +284,15 @@ const Analytics = () => {
                   tick={{ fill: 'var(--foreground)', fontSize: 12 }}
                   tickLine={{ stroke: 'var(--secondary)' }}
                   axisLine={{ stroke: 'var(--secondary)' }}
+                  dx={-10} // Move labels left slightly
                   label={{ 
                     value: 'Check-in Time', 
                     angle: -90, 
                     position: 'left',
-                    offset: -35,
-                    fill: 'var(--foreground)'
+                    offset: -45,
+                    fill: 'var(--foreground)',
+                    fontSize: 14,
+                    fontWeight: 500
                   }}
                 />
                 <Tooltip 
@@ -292,27 +300,29 @@ const Analytics = () => {
                     backgroundColor: 'white',
                     border: '1px solid var(--secondary)',
                     borderRadius: '8px',
-                    padding: '8px'
+                    padding: '12px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                   }}
-                  labelFormatter={formatDate}
-                  formatter={(value: string) => [formatTime(value), 'Check-in Time']}
+                  labelFormatter={(value) => `Date: ${formatDate(value as string)}`}
+                  formatter={(value: string) => [`${formatTime(value)}`, 'Check-in Time']}
+                  cursor={{ stroke: 'var(--secondary)', strokeWidth: 1 }}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="checkInTime"
                   stroke="var(--primary)"
-                  strokeWidth={2}
+                  strokeWidth={3}
                   dot={{ 
-                    fill: "var(--primary)",
-                    stroke: "white",
+                    fill: "white",
+                    stroke: "var(--primary)",
                     strokeWidth: 2,
-                    r: 4
+                    r: 5
                   }}
                   activeDot={{
                     fill: "var(--primary)",
                     stroke: "white",
                     strokeWidth: 2,
-                    r: 6
+                    r: 7
                   }}
                 />
               </LineChart>
