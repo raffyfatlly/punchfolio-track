@@ -13,17 +13,18 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Get attendance records from localStorage
+  // Get attendance records from localStorage and filter for current user
   const attendanceRecords = JSON.parse(localStorage.getItem('attendance-records') || '[]');
   
-  // Sort records by date and time (most recent first) and take the last 3
-  const recentAttendance = [...attendanceRecords]
-    .sort((a, b) => {
+  // Filter records for the current user and sort by date (most recent first)
+  const recentAttendance = attendanceRecords
+    .filter((record: any) => record.name === user?.name) // Filter for current user
+    .sort((a: any, b: any) => {
       const dateA = new Date(`${a.date}T${a.checkInTime}`);
       const dateB = new Date(`${b.date}T${b.checkInTime}`);
       return dateB.getTime() - dateA.getTime();
     })
-    .slice(0, 3);
+    .slice(0, 3); // Take only the last 3 records
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -57,14 +58,15 @@ const Dashboard = () => {
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Welcome Back
+            Welcome Back, {user.name}
           </h1>
           <p className="text-muted-foreground">
-            {new Date('2025-03-21').toLocaleDateString('en-US', { 
+            {new Date().toLocaleDateString('en-MY', { 
               weekday: 'long', 
               year: 'numeric', 
               month: 'long', 
-              day: 'numeric' 
+              day: 'numeric',
+              timeZone: 'Asia/Kuala_Lumpur'
             })}
           </p>
         </div>
@@ -92,30 +94,34 @@ const Dashboard = () => {
 
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Your Recent Attendance</h2>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Check-in Time</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentAttendance.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell>{record.date}</TableCell>
-                    <TableCell>{record.checkInTime}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(record.status)}`}>
-                        {getStatusText(record.status)}
-                      </span>
-                    </TableCell>
+          {recentAttendance.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Check-in Time</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {recentAttendance.map((record: any) => (
+                    <TableRow key={record.id}>
+                      <TableCell>{record.date}</TableCell>
+                      <TableCell>{record.checkInTime}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(record.status)}`}>
+                          {getStatusText(record.status)}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground">No attendance records found</p>
+          )}
         </Card>
       </div>
     );
