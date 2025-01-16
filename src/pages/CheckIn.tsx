@@ -24,13 +24,15 @@ const CheckIn = () => {
     }
   }, [user, navigate]);
 
+  // Only cleanup when component unmounts, not on every stream change
   useEffect(() => {
     return () => {
       if (stream) {
+        console.log("Cleaning up camera stream on unmount");
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [stream]);
+  }, []); // Empty dependency array means this only runs on unmount
 
   const startCamera = async () => {
     if (isCameraInitializing) return;
@@ -38,6 +40,7 @@ const CheckIn = () => {
     try {
       setIsCameraInitializing(true);
       
+      // Only stop existing stream if we're restarting the camera
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
@@ -59,7 +62,6 @@ const CheckIn = () => {
         videoRef.current.srcObject = mediaStream;
         console.log("Video element setup complete");
         
-        // Make sure video plays when metadata is loaded
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
             videoRef.current.play()
@@ -193,6 +195,7 @@ const CheckIn = () => {
   };
 
   const stopCamera = () => {
+    // Only stop camera when explicitly requested (like after taking photo)
     console.log("Stopping camera stream");
     if (stream) {
       stream.getTracks().forEach(track => {
