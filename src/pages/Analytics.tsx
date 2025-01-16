@@ -48,9 +48,13 @@ interface DateGroups {
 const Analytics = () => {
   const [selectedMonth, setSelectedMonth] = useState("march");
   const [selectedName, setSelectedName] = useState("all");
-  const { user } = useAuth(); // Add this line to get user context
+  const { user } = useAuth();
 
-  // Mock data with dates on x-axis and times on y-axis
+  // Get staff list from localStorage
+  const staffList = JSON.parse(localStorage.getItem('staff-list') || '[]');
+  const staffNames = staffList.map((staff: any) => staff.name);
+
+  // Mock data with dates on x-axis and times on y-axis, filtered to only include existing staff
   const attendanceData: AttendanceRecord[] = [
     { 
       id: 1,
@@ -94,12 +98,12 @@ const Analytics = () => {
       checkInTime: "08:15",
       status: "too-early",
     },
-  ];
+  ].filter(record => staffNames.includes(record.name));
 
-  // Get unique names for the dropdown
+  // Get unique names for the dropdown from staff list
   const uniqueNames = useMemo(() => 
-    Array.from(new Set(attendanceData.map(record => record.name))),
-    [attendanceData]
+    Array.from(new Set(staffNames)),
+    [staffNames]
   );
 
   // Filter attendance data based on name
@@ -261,9 +265,9 @@ const Analytics = () => {
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="divide-y">
                 {filteredAttendance.map((record) => (
-                  <TableRow key={record.id}>
+                  <TableRow key={record.id} className="hover:bg-muted/50">
                     <TableCell className="font-medium">{record.name}</TableCell>
                     <TableCell>{record.date}</TableCell>
                     <TableCell>{record.checkInTime}</TableCell>
@@ -293,19 +297,21 @@ const Analytics = () => {
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {attendanceData.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell className="font-medium">{record.name}</TableCell>
-                    <TableCell>{record.date}</TableCell>
-                    <TableCell>{record.checkInTime}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(record.status)}`}>
-                        {getStatusText(record.status)}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
+              <TableBody className="divide-y">
+                {attendanceData
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .map((record) => (
+                    <TableRow key={record.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">{record.name}</TableCell>
+                      <TableCell>{record.date}</TableCell>
+                      <TableCell>{record.checkInTime}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(record.status)}`}>
+                          {getStatusText(record.status)}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </div>
