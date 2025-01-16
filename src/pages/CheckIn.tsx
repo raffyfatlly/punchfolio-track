@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Camera, RefreshCcw, CameraOff, Check, X } from "lucide-react";
+import { Camera, CameraOff, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { formatInTimeZone } from 'date-fns-tz';
@@ -116,7 +116,6 @@ const CheckIn = () => {
     ctx.drawImage(videoRef.current, 0, 0);
     const photoData = canvas.toDataURL("image/jpeg");
     setPhoto(photoData);
-    stopCamera();
   };
 
   const submitAttendance = async () => {
@@ -228,7 +227,6 @@ const CheckIn = () => {
 
   const resetCamera = () => {
     setPhoto(null);
-    startCamera();
   };
 
   return (
@@ -255,7 +253,7 @@ const CheckIn = () => {
             </Button>
           )}
 
-          {stream && (
+          {stream && !photo && (
             <>
               <div className="relative w-full h-[400px] rounded-2xl overflow-hidden shadow-lg border-4 border-accent bg-black">
                 <video
