@@ -62,17 +62,23 @@ const CheckIn = () => {
         // Create new attendance record with current Malaysia timestamp
         const newRecord = {
           id: Date.now(),
-          name: user.name, // Use the authenticated user's name
+          name: user.name,
           date: malaysiaDate,
           checkInTime: malaysiaTime,
-          status: malaysiaTime <= "09:00" ? "on-time" : "late"
+          status: malaysiaTime <= "09:00" ? "on-time" : "late",
+          photo: photoData // Store the photo in the record
         };
 
         // Get existing records
         const existingRecords = JSON.parse(localStorage.getItem('attendance-records') || '[]');
         
+        // Filter out any previous records from the same user on the same day
+        const filteredRecords = existingRecords.filter((record: any) => 
+          !(record.name === user.name && record.date === malaysiaDate)
+        );
+        
         // Add new record at the beginning of the array
-        localStorage.setItem('attendance-records', JSON.stringify([newRecord, ...existingRecords]));
+        localStorage.setItem('attendance-records', JSON.stringify([newRecord, ...filteredRecords]));
         
         toast({
           title: "Check-in Successful",

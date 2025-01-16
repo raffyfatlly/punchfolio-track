@@ -13,18 +13,18 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Get attendance records from localStorage and filter for current user
+  // Get attendance records from localStorage
   const attendanceRecords = JSON.parse(localStorage.getItem('attendance-records') || '[]');
   
   // Filter records for the current user and sort by date (most recent first)
   const recentAttendance = attendanceRecords
-    .filter((record: any) => record.name === user?.name) // Filter for current user
+    .filter((record: any) => record.name === user?.name)
     .sort((a: any, b: any) => {
       const dateA = new Date(`${a.date}T${a.checkInTime}`);
       const dateB = new Date(`${b.date}T${b.checkInTime}`);
       return dateB.getTime() - dateA.getTime();
     })
-    .slice(0, 3); // Take only the last 3 records
+    .slice(0, 3);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -127,6 +127,7 @@ const Dashboard = () => {
     );
   }
 
+  // Admin view
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -151,6 +152,49 @@ const Dashboard = () => {
               View and manage staff members
             </p>
           </div>
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold mb-4">Today's Check-ins</h2>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Check-in Time</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Photo</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {attendanceRecords
+                .filter((record: any) => {
+                  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+                  return record.date === today;
+                })
+                .map((record: any) => (
+                  <TableRow key={record.id}>
+                    <TableCell>{record.name}</TableCell>
+                    <TableCell>{record.checkInTime}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(record.status)}`}>
+                        {getStatusText(record.status)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {record.photo && (
+                        <img 
+                          src={record.photo} 
+                          alt={`${record.name}'s check-in`} 
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
         </div>
       </Card>
     </div>
