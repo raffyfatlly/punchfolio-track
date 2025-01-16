@@ -67,7 +67,11 @@ export const AttendanceTable = ({ profileId, limit }: Props) => {
       
       if (error) throw error;
       return data as AttendanceRecord[];
-    }
+    },
+    // Add these options to automatically refresh data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000, // Refresh every 5 seconds
   });
 
   if (isLoading) {
