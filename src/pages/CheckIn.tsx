@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Camera, RefreshCcw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 
 const CheckIn = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -41,32 +42,32 @@ const CheckIn = () => {
         setPhoto(photoData);
         stopCamera();
         
-        // Get current attendance data
-        const currentDate = new Date('2025-03-21'); // Using mock date
-        const checkInTime = currentDate.toLocaleTimeString('en-US', { 
+        // Get current mock date and time
+        const currentDate = new Date('2025-03-21');
+        const currentTime = new Date('2025-03-21').toLocaleTimeString('en-US', { 
           hour: '2-digit', 
-          minute: '2-digit', 
+          minute: '2-digit',
           hour12: false 
         });
         
-        // Create new attendance record
+        // Create new attendance record with current timestamp
         const newRecord = {
           id: Date.now(),
           name: "John Doe", // This should come from auth context in a real app
-          date: currentDate.toISOString().split('T')[0],
-          checkInTime,
-          status: checkInTime <= "09:00" ? "on-time" : "late"
+          date: format(currentDate, 'yyyy-MM-dd'),
+          checkInTime: currentTime,
+          status: currentTime <= "09:00" ? "on-time" : "late"
         };
 
         // Get existing records
         const existingRecords = JSON.parse(localStorage.getItem('attendance-records') || '[]');
         
-        // Add new record
+        // Add new record at the beginning of the array
         localStorage.setItem('attendance-records', JSON.stringify([newRecord, ...existingRecords]));
         
         toast({
           title: "Check-in Successful",
-          description: `Time recorded: ${checkInTime}`,
+          description: `Time recorded: ${currentTime}`,
         });
 
         // Redirect to dashboard after 2 seconds
