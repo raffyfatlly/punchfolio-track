@@ -55,21 +55,30 @@ const CheckIn = () => {
       console.log("Camera access granted, tracks:", mediaStream.getTracks());
       setStream(mediaStream);
 
+      // Wait for the video element to be available
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       if (videoRef.current) {
         console.log("Setting video source...");
         videoRef.current.srcObject = mediaStream;
         console.log("Video element ready state:", videoRef.current.readyState);
         
-        await videoRef.current.play().catch(err => {
+        // Force a repaint of the video element
+        videoRef.current.style.display = 'none';
+        videoRef.current.offsetHeight; // Force a repaint
+        videoRef.current.style.display = 'block';
+        
+        try {
+          await videoRef.current.play();
+          console.log("Video playback started successfully");
+        } catch (err) {
           console.error("Error playing video:", err);
           toast({
             title: "Camera Error",
             description: "Failed to start video stream. Please try again.",
             variant: "destructive",
           });
-        });
-        
-        console.log("Video playback started");
+        }
       } else {
         console.error("Video element reference not found");
       }
@@ -252,7 +261,9 @@ const CheckIn = () => {
                   className="absolute inset-0 w-full h-full object-cover"
                   style={{
                     transform: 'scaleX(-1)',
-                    display: 'block'
+                    display: 'block',
+                    minWidth: '100%',
+                    minHeight: '100%'
                   }}
                 />
               </div>
