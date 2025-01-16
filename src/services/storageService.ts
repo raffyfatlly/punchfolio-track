@@ -4,7 +4,7 @@ export interface AttendanceRecord {
   name: string;
   date: string;
   checkInTime: string;
-  status: "on-time" | "late" | "too-early";
+  status: "on-time" | "late";
   photo?: string;
 }
 
@@ -20,6 +20,28 @@ const KEYS = {
   ATTENDANCE: 'attendance-records',
   STAFF: 'staff-list',
 } as const;
+
+// Initialize storage with admin if it doesn't exist
+const initializeStorage = () => {
+  const existingStaff = localStorage.getItem(KEYS.STAFF);
+  if (!existingStaff) {
+    const initialStaff = [{
+      id: 0,
+      name: "Admin",
+      position: "Administrator",
+      department: "Management"
+    }];
+    localStorage.setItem(KEYS.STAFF, JSON.stringify(initialStaff));
+  }
+
+  // Initialize empty attendance records if they don't exist
+  if (!localStorage.getItem(KEYS.ATTENDANCE)) {
+    localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify([]));
+  }
+};
+
+// Run initialization
+initializeStorage();
 
 // Attendance records operations
 export const attendanceService = {
@@ -63,17 +85,12 @@ export const staffService = {
   // Get all staff members
   getAllStaff: (): StaffMember[] => {
     const staff = localStorage.getItem(KEYS.STAFF);
-    const staffMembers = staff ? JSON.parse(staff) : [];
-    // Always include admin in the list
-    return [
-      { id: 0, name: "Admin", position: "Administrator", department: "Management" },
-      ...staffMembers
-    ];
+    return staff ? JSON.parse(staff) : [];
   },
 
   // Add new staff member
   addStaffMember: (staffMember: Omit<StaffMember, "id">): void => {
-    const staff = staffService.getAllStaff().filter(s => s.id !== 0); // Remove admin before adding
+    const staff = staffService.getAllStaff();
     const newStaffMember = {
       id: Date.now(),
       ...staffMember,
@@ -83,7 +100,7 @@ export const staffService = {
 
   // Delete staff member
   deleteStaffMember: (id: number): void => {
-    const staff = staffService.getAllStaff().filter(s => s.id !== 0); // Remove admin before filtering
+    const staff = staffService.getAllStaff();
     localStorage.setItem(
       KEYS.STAFF,
       JSON.stringify(staff.filter(member => member.id !== id))

@@ -59,54 +59,7 @@ const Analytics = () => {
   const staffNames = staffList.map((staff) => staff.name);
 
   // Get attendance records from localStorage
-  const storedRecords = JSON.parse(localStorage.getItem('attendance-records') || '[]');
-  
-  // Combine stored records with mock data, filtered to only include existing staff
-  const attendanceData: AttendanceRecord[] = [
-    ...storedRecords,
-    { 
-      id: 1,
-      name: "John Doe",
-      date: "2025-03-20",
-      checkInTime: "08:45",
-      status: "on-time" as const,
-    },
-    { 
-      id: 2,
-      name: "Jane Smith",
-      date: "2025-03-20",
-      checkInTime: "09:15",
-      status: "late" as const,
-    },
-    { 
-      id: 3,
-      name: "Mike Johnson",
-      date: "2025-02-20",
-      checkInTime: "08:30",
-      status: "on-time" as const,
-    },
-    { 
-      id: 4,
-      name: "John Doe",
-      date: "2024-12-21",
-      checkInTime: "08:30",
-      status: "on-time" as const,
-    },
-    { 
-      id: 5,
-      name: "Jane Smith",
-      date: "2025-03-21",
-      checkInTime: "09:45",
-      status: "late" as const,
-    },
-    { 
-      id: 6,
-      name: "Mike Johnson",
-      date: "2025-03-21",
-      checkInTime: "08:15",
-      status: "on-time" as const,
-    },
-  ].filter(record => staffNames.includes(record.name));
+  const attendanceData: AttendanceRecord[] = JSON.parse(localStorage.getItem('attendance-records') || '[]');
 
   // Get unique names for the dropdown from staff list
   const uniqueNames = useMemo(() => 
