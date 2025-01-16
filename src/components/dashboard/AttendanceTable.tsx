@@ -1,6 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface AttendanceRecord {
   id: number;
@@ -40,9 +41,13 @@ interface Props {
 }
 
 export const AttendanceTable = ({ profileId, limit }: Props) => {
-  const { data: records = [], isLoading } = useQuery({
+  const { toast } = useToast();
+
+  const { data: records = [], isLoading, error } = useQuery({
     queryKey: ['attendance', profileId],
     queryFn: async () => {
+      console.log('Fetching attendance records for profileId:', profileId);
+      
       let query = supabase
         .from('attendance')
         .select(`
@@ -65,17 +70,50 @@ export const AttendanceTable = ({ profileId, limit }: Props) => {
 
       const { data, error } = await query;
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase query error:', error);
+        throw error;
+      }
+
+      console.log('Fetched attendance records:', data);
       return data as AttendanceRecord[];
     },
-    // Add these options to automatically refresh data
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 5000,
+    retry: 2,
+    onError: (error) => {
+      console.error('Query error:', error);
+      toast({
+        title: "Error loading attendance records",
+        description: "Please try refreshing the page",
+        variant: "destructive",
+      });
+    },
   });
 
+  if (error) {
+    return (
+      <div className="p-4 text-center text-red-600">
+        Error loading attendance records. Please try refreshing the page.
+      </div>
+    );
+  }
+
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        Loading attendance records...
+      </div>
+    );
+  }
+
+  if (!records || records.length === 0) {
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        No attendance records found
+      </div>
+    );
   }
 
   return (
