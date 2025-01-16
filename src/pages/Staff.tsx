@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -24,11 +24,23 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+interface StaffMember {
+  id: number;
+  name: string;
+  position: string;
+  department: string;
+}
+
+const STORAGE_KEY = 'staff-list';
+
 const Staff = () => {
-  const [staffList, setStaffList] = useState([
-    { id: 1, name: "John Doe", position: "Manager", department: "Operations" },
-    { id: 2, name: "Jane Smith", position: "Developer", department: "IT" },
-  ]);
+  const [staffList, setStaffList] = useState<StaffMember[]>(() => {
+    const savedStaff = localStorage.getItem(STORAGE_KEY);
+    return savedStaff ? JSON.parse(savedStaff) : [
+      { id: 1, name: "John Doe", position: "Manager", department: "Operations" },
+      { id: 2, name: "Jane Smith", position: "Developer", department: "IT" },
+    ];
+  });
 
   const [newStaff, setNewStaff] = useState({
     name: "",
@@ -38,15 +50,18 @@ const Staff = () => {
 
   const { toast } = useToast();
 
+  // Save to localStorage whenever staffList changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(staffList));
+  }, [staffList]);
+
   const handleAddStaff = () => {
     if (newStaff.name && newStaff.position && newStaff.department) {
-      setStaffList([
-        ...staffList,
-        {
-          id: staffList.length + 1,
-          ...newStaff,
-        },
-      ]);
+      const newStaffMember = {
+        id: Date.now(), // Using timestamp as unique ID
+        ...newStaff,
+      };
+      setStaffList([...staffList, newStaffMember]);
       setNewStaff({ name: "", position: "", department: "" });
       toast({
         title: "Staff member added",
