@@ -153,8 +153,11 @@ const Login = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {staffList.map((staff) => (
-                    <SelectItem key={staff.id} value={staff.id.toString()}>
-                      {staff.name}
+                    <SelectItem 
+                      key={staff.id} 
+                      value={staff.id.toString()}
+                    >
+                      {staff.name} ({staff.role})
                     </SelectItem>
                   ))}
                 </SelectContent>
