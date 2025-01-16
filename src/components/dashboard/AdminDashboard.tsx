@@ -3,10 +3,26 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Users } from "lucide-react";
 import { AttendanceTable } from "./AttendanceTable";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AdminDashboard = () => {
   const navigate = useNavigate();
   
+  // Fetch staff profiles from Supabase
+  const { data: staffProfiles } = useQuery({
+    queryKey: ['staffProfiles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -28,7 +44,7 @@ export const AdminDashboard = () => {
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-semibold">Manage Staff</h2>
             <p className="text-muted-foreground">
-              View and manage staff members
+              {staffProfiles?.length || 0} staff members registered
             </p>
           </div>
         </div>
