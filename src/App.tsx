@@ -1,39 +1,30 @@
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Layout } from "@/components/Layout";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Layout } from "./components/Layout";
-import Dashboard from "./pages/Dashboard";
-import CheckIn from "./pages/CheckIn";
-import Staff from "./pages/Staff";
-import Analytics from "./pages/Analytics";
-import Login from "./pages/Login";
-import { AuthProvider } from "./contexts/AuthContext";
+import Login from "@/pages/Login";
+import Dashboard from "@/pages/Dashboard";
+import Analytics from "@/pages/Analytics";
+import Staff from "@/pages/Staff";
+import CheckIn from "@/pages/CheckIn";
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+function App() {
+  return (
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route element={<Layout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/check-in" element={<CheckIn />} />
-              <Route path="/staff" element={<Staff />} />
-              <Route path="/analytics" element={<Analytics />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route element={<Layout />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/staff" element={<Staff />} />
+            <Route path="/check-in" element={<CheckIn />} />
+          </Route>
+        </Routes>
+      </Router>
+      <Toaster />
     </AuthProvider>
-  </QueryClientProvider>
-);
+  );
+}
 
 export default App;
