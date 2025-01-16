@@ -31,7 +31,7 @@ const CheckIn = () => {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [stream]);
+  }, [stream]); 
 
   const startCamera = async () => {
     if (isCameraInitializing) return;
@@ -44,16 +44,39 @@ const CheckIn = () => {
         stream.getTracks().forEach(track => track.stop());
       }
 
+      console.log("Requesting camera access...");
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: "user"
+        },
         audio: false
       });
       
+      console.log("Camera access granted, tracks:", mediaStream.getTracks());
       setStream(mediaStream);
 
       if (videoRef.current) {
+        console.log("Setting video source...");
         videoRef.current.srcObject = mediaStream;
-        await videoRef.current.play();
+        console.log("Video element ready state:", videoRef.current.readyState);
+        
+        videoRef.current.style.display = 'none';
+        videoRef.current.offsetHeight;
+        videoRef.current.style.display = 'block';
+        
+        try {
+          await videoRef.current.play();
+          console.log("Video playback started successfully");
+        } catch (err) {
+          console.error("Error playing video:", err);
+          toast({
+            title: "Camera Error",
+            description: "Failed to start video stream. Please try again.",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error("Camera access error:", error);
@@ -188,8 +211,12 @@ const CheckIn = () => {
   };
 
   const stopCamera = () => {
+    console.log("Stopping camera stream");
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach(track => {
+        track.stop();
+        console.log("Track stopped:", track.label);
+      });
       setStream(null);
     }
     if (videoRef.current) {
@@ -236,7 +263,12 @@ const CheckIn = () => {
                   playsInline
                   muted
                   className="absolute inset-0 w-full h-full object-cover"
-                  style={{ transform: 'scaleX(-1)' }}
+                  style={{
+                    transform: 'scaleX(-1)',
+                    display: 'block',
+                    minWidth: '100%',
+                    minHeight: '100%'
+                  }}
                 />
               </div>
               <div className="flex gap-4">
