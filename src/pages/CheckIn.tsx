@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Camera, RefreshCcw } from "lucide-react";
+import { Camera, RefreshCcw, CameraOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { formatInTimeZone } from 'date-fns-tz';
@@ -191,7 +191,6 @@ const CheckIn = () => {
   };
 
   const stopCamera = () => {
-    // Only stop camera when explicitly requested (like after taking photo)
     console.log("Stopping camera stream");
     if (stream) {
       stream.getTracks().forEach(track => {
@@ -203,6 +202,7 @@ const CheckIn = () => {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    setPhoto(null); // Reset photo state when exiting camera
   };
 
   const resetCamera = () => {
@@ -250,13 +250,22 @@ const CheckIn = () => {
                   }}
                 />
               </div>
-              <Button 
-                onClick={takePhoto}
-                disabled={isSubmitting}
-                className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity rounded-xl"
-              >
-                {isSubmitting ? "Processing..." : "Take Photo"}
-              </Button>
+              <div className="flex gap-4">
+                <Button 
+                  onClick={takePhoto}
+                  disabled={isSubmitting}
+                  className="flex-1 h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity rounded-xl"
+                >
+                  {isSubmitting ? "Processing..." : "Take Photo"}
+                </Button>
+                <Button
+                  onClick={stopCamera}
+                  variant="outline"
+                  className="h-12 border-2 rounded-xl hover:bg-accent/20 transition-colors"
+                >
+                  <CameraOff className="h-5 w-5" />
+                </Button>
+              </div>
             </>
           )}
 
