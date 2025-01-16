@@ -66,7 +66,12 @@ export const AttendanceTable = ({ profileId, limit }: Props) => {
 
       // If user is not admin, only show their own records
       if (user?.role !== 'admin') {
-        query = query.eq('profile_id', user?.id);
+        // Convert string ID to number using parseInt
+        const userProfileId = user?.id ? parseInt(user.id) : undefined;
+        if (!userProfileId) {
+          throw new Error('Invalid user profile ID');
+        }
+        query = query.eq('profile_id', userProfileId);
       } else if (profileId) {
         // If admin is viewing a specific profile
         query = query.eq('profile_id', profileId);
