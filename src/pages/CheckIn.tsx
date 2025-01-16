@@ -24,7 +24,7 @@ const CheckIn = () => {
     }
   }, [user, navigate]);
 
-  // Only cleanup when component unmounts, not on every stream change
+  // Only cleanup when component unmounts
   useEffect(() => {
     return () => {
       if (stream) {
@@ -32,7 +32,7 @@ const CheckIn = () => {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []); // Empty dependency array means this only runs on unmount
+  }, []); 
 
   const startCamera = async () => {
     if (isCameraInitializing) return;
@@ -40,18 +40,13 @@ const CheckIn = () => {
     try {
       setIsCameraInitializing(true);
       
-      // Only stop existing stream if we're restarting the camera
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
 
       console.log("Requesting camera access...");
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "user",
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
+        video: true,
         audio: false
       });
       
@@ -61,14 +56,8 @@ const CheckIn = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
         console.log("Video element setup complete");
-        
-        videoRef.current.onloadedmetadata = () => {
-          if (videoRef.current) {
-            videoRef.current.play()
-              .then(() => console.log("Video playback started"))
-              .catch(err => console.error("Video playback error:", err));
-          }
-        };
+        await videoRef.current.play();
+        console.log("Video playback started");
       }
     } catch (error) {
       console.error("Camera access error:", error);
@@ -240,14 +229,13 @@ const CheckIn = () => {
 
           {stream && (
             <>
-              <div className="relative rounded-2xl overflow-hidden shadow-lg border-4 border-accent">
+              <div className="relative w-full h-[400px] rounded-2xl overflow-hidden shadow-lg border-4 border-accent">
                 <video
                   ref={videoRef}
                   autoPlay
                   playsInline
                   muted
-                  className="w-full h-full object-cover bg-black"
-                  style={{ minHeight: "400px" }}
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
               <Button 
