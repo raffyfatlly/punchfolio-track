@@ -15,9 +15,9 @@ const CheckIn = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [isCameraInitializing, setIsCameraInitializing] = useState(false);
 
   useEffect(() => {
-    // Cleanup function to stop the stream when component unmounts
     return () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
@@ -26,40 +26,55 @@ const CheckIn = () => {
   }, [stream]);
 
   const startCamera = async () => {
+    if (isCameraInitializing) return;
+    
     try {
-      // Stop any existing stream
+      setIsCameraInitializing(true);
+      
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
 
-      const constraints = {
+      console.log("Requesting camera access...");
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: "user"
-        }
-      };
-
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-      setStream(mediaStream);
+          width: { min: 640, ideal: 1280, max: 1920 },
+          height: { min: 480, ideal: 720, max: 1080 },
+          facingMode: "user",
+          aspectRatio: { ideal: 1.7777777778 }
+        },
+        audio: false
+      });
       
+      console.log("Camera access granted");
+      setStream(mediaStream);
+
       if (videoRef.current) {
+        console.log("Setting video source");
         videoRef.current.srcObject = mediaStream;
-        // Wait for video to be ready
-        await new Promise((resolve) => {
+        
+        // Wait for the video to be ready
+        await new Promise<void>((resolve) => {
           if (videoRef.current) {
-            videoRef.current.onloadedmetadata = resolve;
+            videoRef.current.onloadedmetadata = () => {
+              console.log("Video metadata loaded");
+              resolve();
+            };
           }
         });
+
+        console.log("Starting video playback");
         await videoRef.current.play();
       }
     } catch (error) {
-      console.error("Error accessing camera:", error);
+      console.error("Camera access error:", error);
       toast({
         title: "Camera Error",
-        description: "Unable to access camera. Please check permissions and try again.",
+        description: "Unable to access camera. Please ensure camera permissions are granted and no other app is using the camera.",
         variant: "destructive",
       });
+    } finally {
+      setIsCameraInitializing(false);
     }
   };
 
@@ -156,9 +171,16 @@ const CheckIn = () => {
   };
 
   const stopCamera = () => {
+    console.log("Stopping camera stream");
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach(track => {
+        track.stop();
+        console.log("Track stopped:", track.label);
+      });
       setStream(null);
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
   };
 
@@ -182,17 +204,18 @@ const CheckIn = () => {
         <div className="space-y-6">
           {!stream && !photo && (
             <Button 
-              onClick={startCamera} 
+              onClick={startCamera}
+              disabled={isCameraInitializing}
               className="w-full h-16 text-lg bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity rounded-xl"
             >
               <Camera className="mr-2 h-6 w-6" />
-              Start Camera
+              {isCameraInitializing ? "Initializing Camera..." : "Start Camera"}
             </Button>
           )}
 
           {stream && (
             <>
-              <div className="relative rounded-2xl overflow-hidden shadow-lg border-4 border-accent">
+              <div className="relative rounded-2xl overflow-hidden shadow-lg border-4 border-accent aspect-video">
                 <video
                   ref={videoRef}
                   autoPlay
@@ -202,7 +225,7 @@ const CheckIn = () => {
                 />
               </div>
               <Button 
-                onClick={takePhoto} 
+                onClick={takePhoto}
                 className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity rounded-xl"
               >
                 Take Photo
@@ -216,8 +239,8 @@ const CheckIn = () => {
                 <img src={photo} alt="Check-in" className="w-full" />
               </div>
               <Button 
-                onClick={resetCamera} 
-                variant="outline" 
+                onClick={resetCamera}
+                variant="outline"
                 className="w-full h-12 border-2 rounded-xl hover:bg-accent/20 transition-colors"
               >
                 <RefreshCcw className="mr-2 h-4 w-4" />
