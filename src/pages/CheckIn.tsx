@@ -16,6 +16,13 @@ const CheckIn = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isCameraInitializing, setIsCameraInitializing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     return () => {
@@ -52,25 +59,13 @@ const CheckIn = () => {
       if (videoRef.current) {
         console.log("Setting video source");
         videoRef.current.srcObject = mediaStream;
-        
-        // Wait for the video to be ready
-        await new Promise<void>((resolve) => {
-          if (videoRef.current) {
-            videoRef.current.onloadedmetadata = () => {
-              console.log("Video metadata loaded");
-              resolve();
-            };
-          }
-        });
-
-        console.log("Starting video playback");
         await videoRef.current.play();
       }
     } catch (error) {
       console.error("Camera access error:", error);
       toast({
         title: "Camera Error",
-        description: "Unable to access camera. Please ensure camera permissions are granted and no other app is using the camera.",
+        description: "Unable to access camera. Please ensure camera permissions are granted.",
         variant: "destructive",
       });
     } finally {
@@ -88,85 +83,105 @@ const CheckIn = () => {
       return;
     }
 
-    if (videoRef.current) {
+    if (isSubmitting) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      if (!videoRef.current) {
+        throw new Error("Camera not initialized");
+      }
+
       const canvas = document.createElement("canvas");
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
       const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.drawImage(videoRef.current, 0, 0);
-        const photoData = canvas.toDataURL("image/jpeg");
-        setPhoto(photoData);
-        stopCamera();
-        
-        try {
-          // Get current date and time in Malaysia timezone
-          const now = new Date();
-          const malaysiaDate = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'yyyy-MM-dd');
-          const malaysiaTime = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'HH:mm');
-          
-          // Convert base64 to blob
-          const base64Data = photoData.split(',')[1];
-          const byteCharacters = atob(base64Data);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: 'image/jpeg' });
-
-          // Upload photo to Supabase Storage with authenticated client
-          const fileName = `${user.id}_${Date.now()}.jpg`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('attendance_photos')
-            .upload(fileName, blob, {
-              cacheControl: '3600',
-              upsert: false
-            });
-
-          if (uploadError) {
-            console.error('Upload error:', uploadError);
-            throw uploadError;
-          }
-
-          // Get the public URL of the uploaded photo
-          const { data: { publicUrl } } = supabase.storage
-            .from('attendance_photos')
-            .getPublicUrl(fileName);
-
-          // Create attendance record
-          const { error: insertError } = await supabase
-            .from('attendance')
-            .insert({
-              profile_id: parseInt(user.id),
-              date: malaysiaDate,
-              check_in_time: malaysiaTime,
-              status: malaysiaTime <= "09:00" ? "on-time" : "late",
-              photo: publicUrl
-            });
-
-          if (insertError) {
-            console.error('Insert error:', insertError);
-            throw insertError;
-          }
-
-          toast({
-            title: "Check-in Successful",
-            description: `Time recorded: ${malaysiaTime} (MYT)`,
-          });
-
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 2000);
-        } catch (error) {
-          console.error('Error during check-in:', error);
-          toast({
-            title: "Check-in Failed",
-            description: "There was an error recording your attendance. Please try again.",
-            variant: "destructive",
-          });
-        }
+      
+      if (!ctx) {
+        throw new Error("Could not get canvas context");
       }
+
+      ctx.drawImage(videoRef.current, 0, 0);
+      const photoData = canvas.toDataURL("image/jpeg");
+      setPhoto(photoData);
+      stopCamera();
+
+      // Get current date and time in Malaysia timezone
+      const now = new Date();
+      const malaysiaDate = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'yyyy-MM-dd');
+      const malaysiaTime = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'HH:mm');
+      
+      // Convert base64 to blob
+      const base64Data = photoData.split(',')[1];
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+      // Get the profile ID for the current user
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('name', user.name)
+        .single();
+
+      if (profileError || !profileData) {
+        throw new Error('Could not find user profile');
+      }
+
+      // Upload photo to Supabase Storage
+      const fileName = `${profileData.id}_${Date.now()}.jpg`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('attendance_photos')
+        .upload(fileName, blob);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get the public URL of the uploaded photo
+      const { data: { publicUrl } } = supabase.storage
+        .from('attendance_photos')
+        .getPublicUrl(fileName);
+
+      // Create attendance record
+      const { error: insertError } = await supabase
+        .from('attendance')
+        .insert({
+          profile_id: profileData.id,
+          date: malaysiaDate,
+          check_in_time: malaysiaTime,
+          status: malaysiaTime <= "09:00" ? "on-time" : "late",
+          photo: publicUrl
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      toast({
+        title: "Check-in Successful",
+        description: `Time recorded: ${malaysiaTime} (MYT)`,
+      });
+
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error during check-in:', error);
+      toast({
+        title: "Check-in Failed",
+        description: "There was an error recording your attendance. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -205,7 +220,7 @@ const CheckIn = () => {
           {!stream && !photo && (
             <Button 
               onClick={startCamera}
-              disabled={isCameraInitializing}
+              disabled={isCameraInitializing || isSubmitting}
               className="w-full h-16 text-lg bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity rounded-xl"
             >
               <Camera className="mr-2 h-6 w-6" />
@@ -226,9 +241,10 @@ const CheckIn = () => {
               </div>
               <Button 
                 onClick={takePhoto}
+                disabled={isSubmitting}
                 className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity rounded-xl"
               >
-                Take Photo
+                {isSubmitting ? "Processing..." : "Take Photo"}
               </Button>
             </>
           )}
@@ -240,6 +256,7 @@ const CheckIn = () => {
               </div>
               <Button 
                 onClick={resetCamera}
+                disabled={isSubmitting}
                 variant="outline"
                 className="w-full h-12 border-2 rounded-xl hover:bg-accent/20 transition-colors"
               >
