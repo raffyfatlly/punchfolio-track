@@ -34,10 +34,12 @@ const Login = () => {
   useEffect(() => {
     async function fetchStaffList() {
       try {
+        setIsLoading(true);
         console.log('Fetching staff list...');
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, name, role, department');
+          .select('*')
+          .order('name');
         
         if (error) {
           console.error('Supabase error:', error);
@@ -45,7 +47,7 @@ const Login = () => {
         }
 
         console.log('Fetched staff:', data);
-
+        
         if (!data) {
           console.log('No data returned from Supabase');
           setStaffList([]);
@@ -58,27 +60,19 @@ const Login = () => {
         }
 
         // Validate and transform the data to match the Staff interface
-        const validatedStaffList: Staff[] = data.map(item => {
-          // Ensure role is either "staff" or "admin"
-          if (item.role !== "staff" && item.role !== "admin") {
-            console.warn(`Invalid role "${item.role}" for user ${item.name}, defaulting to "staff"`);
-            item.role = "staff";
-          }
-          
-          return {
-            id: item.id,
-            name: item.name,
-            role: item.role as "staff" | "admin",
-            department: item.department
-          };
-        });
+        const validatedStaffList: Staff[] = data.map(item => ({
+          id: item.id,
+          name: item.name,
+          role: item.role === "admin" ? "admin" : "staff",
+          department: item.department
+        }));
 
         setStaffList(validatedStaffList);
       } catch (error) {
         console.error('Error fetching staff:', error);
         toast({
           title: "Error",
-          description: "Failed to load staff members",
+          description: "Failed to load staff members. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -101,16 +95,24 @@ const Login = () => {
       return;
     }
 
+    const staffMember = staffList.find(staff => staff.id.toString() === selectedStaff);
+    
+    if (!staffMember) {
+      toast({
+        title: "Error",
+        description: "Selected staff member not found",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (password === "staff123") {
-      const staffMember = staffList.find(staff => staff.id.toString() === selectedStaff);
-      if (staffMember) {
-        login(staffMember.name, password, staffMember.role);
-        toast({
-          title: "Welcome back! 👋",
-          description: "Successfully logged in",
-        });
-        navigate("/");
-      }
+      login(staffMember.name, password, staffMember.role);
+      toast({
+        title: "Welcome back! 👋",
+        description: "Successfully logged in",
+      });
+      navigate("/");
     } else {
       toast({
         title: "Login failed",
@@ -125,7 +127,7 @@ const Login = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-pink-50">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
+          <p className="mt-4 text-muted-foreground">Loading staff list...</p>
         </div>
       </div>
     );
@@ -147,7 +149,10 @@ const Login = () => {
           <div className="space-y-4">
             <div className="relative">
               <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground/70" />
-              <Select value={selectedStaff} onValueChange={setSelectedStaff}>
+              <Select 
+                value={selectedStaff} 
+                onValueChange={setSelectedStaff}
+              >
                 <SelectTrigger className="pl-10 bg-white/50 border-muted h-12 rounded-2xl">
                   <SelectValue placeholder="Select staff member" />
                 </SelectTrigger>
