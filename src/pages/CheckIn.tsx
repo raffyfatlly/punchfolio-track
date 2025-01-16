@@ -28,10 +28,13 @@ const CheckIn = () => {
   useEffect(() => {
     return () => {
       if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach(track => {
+          track.stop();
+          console.log("Track stopped:", track.label);
+        });
       }
     };
-  }, [stream]); 
+  }, [stream]);
 
   const startCamera = async () => {
     if (isCameraInitializing) return;
@@ -39,7 +42,9 @@ const CheckIn = () => {
     try {
       setIsCameraInitializing(true);
       setShowConfirm(false);
+      setPhoto(null); // Reset photo when starting camera
       
+      // Stop any existing stream
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
@@ -47,9 +52,9 @@ const CheckIn = () => {
       console.log("Requesting camera access...");
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
+          facingMode: "user",
           width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: "user"
+          height: { ideal: 720 }
         },
         audio: false
       });
@@ -58,24 +63,21 @@ const CheckIn = () => {
       setStream(mediaStream);
 
       if (videoRef.current) {
-        console.log("Setting video source...");
         videoRef.current.srcObject = mediaStream;
-        console.log("Video element ready state:", videoRef.current.readyState);
         
-        videoRef.current.style.display = 'none';
-        videoRef.current.offsetHeight;
-        videoRef.current.style.display = 'block';
-        
+        // Wait for video to be ready
+        await new Promise((resolve) => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = () => resolve(true);
+          }
+        });
+
         try {
           await videoRef.current.play();
           console.log("Video playback started successfully");
         } catch (err) {
           console.error("Error playing video:", err);
-          toast({
-            title: "Camera Error",
-            description: "Failed to start video stream. Please try again.",
-            variant: "destructive",
-          });
+          throw new Error("Failed to start video stream");
         }
       }
     } catch (error) {
@@ -91,7 +93,7 @@ const CheckIn = () => {
   };
 
   const capturePhoto = () => {
-    if (!videoRef.current) {
+    if (!videoRef.current || !stream) {
       toast({
         title: "Error",
         description: "Camera not initialized",
@@ -100,20 +102,29 @@ const CheckIn = () => {
       return;
     }
 
-    const canvas = document.createElement("canvas");
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    const ctx = canvas.getContext("2d");
-    
-    if (!ctx) {
-      throw new Error("Could not get canvas context");
-    }
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext("2d");
+      
+      if (!ctx) {
+        throw new Error("Could not get canvas context");
+      }
 
-    ctx.drawImage(videoRef.current, 0, 0);
-    const photoData = canvas.toDataURL("image/jpeg");
-    setPhoto(photoData);
-    stopCamera();
-    setShowConfirm(true);
+      ctx.drawImage(videoRef.current, 0, 0);
+      const photoData = canvas.toDataURL("image/jpeg", 0.8);
+      setPhoto(photoData);
+      stopCamera();
+      setShowConfirm(true);
+    } catch (error) {
+      console.error("Error capturing photo:", error);
+      toast({
+        title: "Error",
+        description: "Failed to capture photo. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const submitAttendance = async () => {
@@ -263,12 +274,7 @@ const CheckIn = () => {
                   playsInline
                   muted
                   className="absolute inset-0 w-full h-full object-cover"
-                  style={{
-                    transform: 'scaleX(-1)',
-                    display: 'block',
-                    minWidth: '100%',
-                    minHeight: '100%'
-                  }}
+                  style={{ transform: 'scaleX(-1)' }}
                 />
               </div>
               <div className="flex gap-4">
