@@ -24,10 +24,10 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Fetch staff list from Supabase with error handling
   useEffect(() => {
     async function fetchStaffList() {
       try {
+        console.log('Fetching staff list...');
         const { data, error } = await supabase
           .from('profiles')
           .select('id, name, role')
@@ -38,8 +38,9 @@ const Login = () => {
           throw error;
         }
 
-        if (!data || data.length === 0) {
-          console.log('No staff members found');
+        if (!data) {
+          console.log('No data returned from Supabase');
+          setStaffList([]);
           toast({
             title: "No staff members",
             description: "No staff members found in the database",
