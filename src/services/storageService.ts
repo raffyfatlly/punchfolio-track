@@ -91,6 +91,11 @@ export const attendanceService = {
     );
     localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify([record, ...filteredRecords]));
   },
+
+  // Clear all attendance records
+  clearAllRecords: (): void => {
+    localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify([]));
+  },
 };
 
 // Staff operations

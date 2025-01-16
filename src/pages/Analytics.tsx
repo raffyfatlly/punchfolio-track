@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -25,6 +25,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { attendanceService } from "@/services/storageService";
 
 interface AttendanceRecord {
   id: number;
@@ -42,7 +43,11 @@ interface StaffMember {
 }
 
 const Analytics = () => {
-  // Mock current date as 2025
+  useEffect(() => {
+    // Clear all records when the Analytics component mounts
+    attendanceService.clearAllRecords();
+  }, []);
+
   const currentDate = new Date('2025-03-21'); // Set to March 21, 2025
   const currentYear = currentDate.getFullYear();
   const currentMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
