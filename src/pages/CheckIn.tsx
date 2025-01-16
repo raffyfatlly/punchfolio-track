@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { formatInTimeZone } from 'date-fns-tz';
+import { useAuth } from "@/contexts/AuthContext";
 
 const CheckIn = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -13,6 +14,7 @@ const CheckIn = () => {
   const [photo, setPhoto] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();  // Get the authenticated user
 
   const startCamera = async () => {
     try {
@@ -32,6 +34,15 @@ const CheckIn = () => {
   };
 
   const takePhoto = () => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to check in.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (videoRef.current) {
       const canvas = document.createElement("canvas");
       canvas.width = videoRef.current.videoWidth;
@@ -51,7 +62,7 @@ const CheckIn = () => {
         // Create new attendance record with current Malaysia timestamp
         const newRecord = {
           id: Date.now(),
-          name: "John Doe", // This should come from auth context in a real app
+          name: user.name, // Use the authenticated user's name
           date: malaysiaDate,
           checkInTime: malaysiaTime,
           status: malaysiaTime <= "09:00" ? "on-time" : "late"
