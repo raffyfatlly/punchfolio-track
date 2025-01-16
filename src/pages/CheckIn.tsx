@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Camera, RefreshCcw, CameraOff, Upload } from "lucide-react";
+import { Camera, RefreshCcw, CameraOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { formatInTimeZone } from 'date-fns-tz';
@@ -17,7 +17,6 @@ const CheckIn = () => {
   const { user } = useAuth();
   const [isCameraInitializing, setIsCameraInitializing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -31,14 +30,13 @@ const CheckIn = () => {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [stream]);
+  }, []); 
 
   const startCamera = async () => {
     if (isCameraInitializing) return;
     
     try {
       setIsCameraInitializing(true);
-      setShowConfirm(false);
       
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
@@ -57,6 +55,9 @@ const CheckIn = () => {
       console.log("Camera access granted, tracks:", mediaStream.getTracks());
       setStream(mediaStream);
 
+      // Wait for the video element to be available
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       if (videoRef.current) {
         console.log("Setting video source...");
         videoRef.current.srcObject = mediaStream;
@@ -64,7 +65,7 @@ const CheckIn = () => {
         
         // Force a repaint of the video element
         videoRef.current.style.display = 'none';
-        videoRef.current.offsetHeight; // Trigger reflow
+        videoRef.current.offsetHeight; // Force a repaint
         videoRef.current.style.display = 'block';
         
         try {
@@ -78,6 +79,8 @@ const CheckIn = () => {
             variant: "destructive",
           });
         }
+      } else {
+        console.error("Video element reference not found");
       }
     } catch (error) {
       console.error("Camera access error:", error);
@@ -91,44 +94,55 @@ const CheckIn = () => {
     }
   };
 
-  const capturePhoto = () => {
-    if (!videoRef.current) {
+  const takePhoto = async () => {
+    if (!user?.id) {
       toast({
         title: "Error",
-        description: "Camera not initialized",
+        description: "You must be logged in to check in.",
         variant: "destructive",
       });
       return;
     }
 
-    const canvas = document.createElement("canvas");
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    const ctx = canvas.getContext("2d");
-    
-    if (!ctx) {
-      throw new Error("Could not get canvas context");
-    }
-
-    ctx.drawImage(videoRef.current, 0, 0);
-    const photoData = canvas.toDataURL("image/jpeg");
-    setPhoto(photoData);
-    stopCamera();
-    setShowConfirm(true);
-  };
-
-  const submitAttendance = async () => {
-    if (!user?.id || !photo) {
-      toast({
-        title: "Error",
-        description: "Missing photo or user data",
-        variant: "destructive",
-      });
+    if (isSubmitting) {
       return;
     }
 
     try {
       setIsSubmitting(true);
+
+      if (!videoRef.current) {
+        throw new Error("Camera not initialized");
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext("2d");
+      
+      if (!ctx) {
+        throw new Error("Could not get canvas context");
+      }
+
+      ctx.drawImage(videoRef.current, 0, 0);
+      const photoData = canvas.toDataURL("image/jpeg");
+      setPhoto(photoData);
+      stopCamera();
+
+      // Get current date and time in Malaysia timezone
+      const now = new Date();
+      const malaysiaDate = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'yyyy-MM-dd');
+      const malaysiaTime = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'HH:mm');
+      
+      // Convert base64 to blob
+      const base64Data = photoData.split(',')[1];
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'image/jpeg' });
 
       // Get the profile ID for the current user
       const { data: profileData, error: profileError } = await supabase
@@ -141,29 +155,11 @@ const CheckIn = () => {
         throw new Error('Could not find user profile');
       }
 
-      // Convert base64 to blob
-      const base64Data = photo.split(',')[1];
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'image/jpeg' });
-
-      // Create a unique filename
-      const fileName = `${profileData.id}_${Date.now()}.jpg`;
-      const file = new File([blob], fileName, { type: 'image/jpeg' });
-
-      // Get current date and time in Malaysia timezone
-      const now = new Date();
-      const malaysiaDate = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'yyyy-MM-dd');
-      const malaysiaTime = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'HH:mm:ss');
-
       // Upload photo to Supabase Storage
+      const fileName = `${profileData.id}_${Date.now()}.jpg`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('attendance_photos')
-        .upload(fileName, file);
+        .upload(fileName, blob);
 
       if (uploadError) {
         throw uploadError;
@@ -181,7 +177,7 @@ const CheckIn = () => {
           profile_id: profileData.id,
           date: malaysiaDate,
           check_in_time: malaysiaTime,
-          status: malaysiaTime <= "09:00:00" ? "on-time" : "late",
+          status: malaysiaTime <= "09:00" ? "on-time" : "late",
           photo: publicUrl
         });
 
@@ -194,7 +190,6 @@ const CheckIn = () => {
         description: `Time recorded: ${malaysiaTime} (MYT)`,
       });
 
-      // Add a delay before navigation
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
@@ -223,11 +218,11 @@ const CheckIn = () => {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    setPhoto(null); // Reset photo state when exiting camera
   };
 
   const resetCamera = () => {
     setPhoto(null);
-    setShowConfirm(false);
     startCamera();
   };
 
@@ -274,11 +269,11 @@ const CheckIn = () => {
               </div>
               <div className="flex gap-4">
                 <Button 
-                  onClick={capturePhoto}
+                  onClick={takePhoto}
                   disabled={isSubmitting}
                   className="flex-1 h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity rounded-xl"
                 >
-                  Take Photo
+                  {isSubmitting ? "Processing..." : "Take Photo"}
                 </Button>
                 <Button
                   onClick={stopCamera}
@@ -301,38 +296,15 @@ const CheckIn = () => {
                   style={{ transform: 'scaleX(-1)' }}
                 />
               </div>
-              <div className="flex gap-4">
-                {showConfirm ? (
-                  <>
-                    <Button 
-                      onClick={submitAttendance}
-                      disabled={isSubmitting}
-                      className="flex-1 h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity rounded-xl"
-                    >
-                      <Upload className="mr-2 h-4 w-4" />
-                      {isSubmitting ? "Submitting..." : "Submit Attendance"}
-                    </Button>
-                    <Button
-                      onClick={resetCamera}
-                      variant="outline"
-                      disabled={isSubmitting}
-                      className="h-12 border-2 rounded-xl hover:bg-accent/20 transition-colors"
-                    >
-                      <RefreshCcw className="h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <Button 
-                    onClick={resetCamera}
-                    disabled={isSubmitting}
-                    variant="outline"
-                    className="w-full h-12 border-2 rounded-xl hover:bg-accent/20 transition-colors"
-                  >
-                    <RefreshCcw className="mr-2 h-4 w-4" />
-                    Take Another Photo
-                  </Button>
-                )}
-              </div>
+              <Button 
+                onClick={resetCamera}
+                disabled={isSubmitting}
+                variant="outline"
+                className="w-full h-12 border-2 rounded-xl hover:bg-accent/20 transition-colors"
+              >
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                Take Another Photo
+              </Button>
             </>
           )}
         </div>
