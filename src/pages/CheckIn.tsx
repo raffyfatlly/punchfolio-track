@@ -17,6 +17,7 @@ const CheckIn = () => {
   const { user } = useAuth();
   const [isCameraInitializing, setIsCameraInitializing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -196,9 +197,11 @@ const CheckIn = () => {
         throw insertError;
       }
 
+      setIsSuccess(true);
       toast({
-        title: "Check-in Successful",
+        title: "Check-in Successful! 🎉",
         description: `Time recorded: ${malaysiaTime} (MYT)`,
+        duration: 3000,
       });
 
       // Stop the camera and clean up
@@ -206,7 +209,7 @@ const CheckIn = () => {
         stream.getTracks().forEach(track => track.stop());
       }
 
-      // Navigate to dashboard after successful submission
+      // Navigate to dashboard after a short delay
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
@@ -255,7 +258,7 @@ const CheckIn = () => {
       
       <Card className="p-8 bg-gradient-to-br from-white to-muted/20 rounded-[2rem] border-none shadow-lg">
         <div className="space-y-6">
-          {!stream && !photo && (
+          {!stream && !photo && !isSuccess && (
             <Button 
               onClick={startCamera}
               disabled={isCameraInitializing || isSubmitting}
@@ -266,7 +269,7 @@ const CheckIn = () => {
             </Button>
           )}
 
-          {stream && !photo && (
+          {stream && !photo && !isSuccess && (
             <>
               <div className="relative w-full h-[400px] rounded-2xl overflow-hidden shadow-lg border-4 border-accent bg-black">
                 <video
@@ -301,7 +304,7 @@ const CheckIn = () => {
             </>
           )}
 
-          {photo && (
+          {photo && !isSuccess && (
             <>
               <div className="relative rounded-2xl overflow-hidden shadow-lg border-4 border-accent">
                 <img 
@@ -331,6 +334,16 @@ const CheckIn = () => {
                 </Button>
               </div>
             </>
+          )}
+
+          {isSuccess && (
+            <div className="text-center space-y-4 animate-fade-in">
+              <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+                <Check className="h-8 w-8 text-green-500" />
+              </div>
+              <h2 className="text-xl font-semibold">Check-in Successful!</h2>
+              <p className="text-muted-foreground">Redirecting to dashboard...</p>
+            </div>
           )}
         </div>
       </Card>
