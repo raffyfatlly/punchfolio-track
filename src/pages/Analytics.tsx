@@ -42,7 +42,12 @@ interface StaffMember {
 }
 
 const Analytics = () => {
-  const [selectedMonth, setSelectedMonth] = useState("03"); // Changed to use month numbers
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
+
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedYear, setSelectedYear] = useState(currentYear.toString());
   const [selectedName, setSelectedName] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -78,7 +83,7 @@ const Analytics = () => {
     { 
       id: 4,
       name: "John Doe",
-      date: "2024-01-21",
+      date: "2023-12-21",
       checkInTime: "08:30",
       status: "on-time" as const,
     },
@@ -104,15 +109,16 @@ const Analytics = () => {
     [staffNames]
   );
 
-  // Filter attendance data based on name and month
+  // Filter attendance data based on name, month, and year
   const filteredAttendance = useMemo(() => 
     attendanceData.filter(record => {
       const matchesName = selectedName === "all" ? true : record.name === selectedName;
-      const recordMonth = record.date.split('-')[1]; // Extract month from date
+      const [recordYear, recordMonth] = record.date.split('-');
       const matchesMonth = selectedMonth === "all" ? true : recordMonth === selectedMonth;
-      return matchesName && matchesMonth;
+      const matchesYear = selectedYear === "all" ? true : recordYear === selectedYear;
+      return matchesName && matchesMonth && matchesYear;
     }),
-    [selectedName, selectedMonth, attendanceData]
+    [selectedName, selectedMonth, selectedYear, attendanceData]
   );
 
   // Calculate pagination
@@ -136,6 +142,12 @@ const Analytics = () => {
         return "bg-muted text-muted-foreground";
     }
   };
+
+  // Get available years from attendance data
+  const availableYears = useMemo(() => {
+    const years = new Set(attendanceData.map(record => record.date.split('-')[0]));
+    return Array.from(years).sort((a, b) => Number(b) - Number(a)); // Sort descending
+  }, [attendanceData]);
 
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg">
@@ -173,6 +185,19 @@ const Analytics = () => {
             <SelectItem value="10">October</SelectItem>
             <SelectItem value="11">November</SelectItem>
             <SelectItem value="12">December</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="max-w-xs border-secondary/20">
+            <SelectValue placeholder="Select year" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Years</SelectItem>
+            {availableYears.map((year) => (
+              <SelectItem key={year} value={year}>
+                {year}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
