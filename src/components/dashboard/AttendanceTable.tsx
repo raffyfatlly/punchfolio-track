@@ -66,12 +66,19 @@ export const AttendanceTable = ({ profileId, limit }: Props) => {
 
       // If user is not admin, only show their own records
       if (user?.role !== 'admin') {
-        // Convert string ID to number using parseInt
-        const userProfileId = user?.id ? parseInt(user.id) : undefined;
-        if (!userProfileId) {
-          throw new Error('Invalid user profile ID');
+        // Get the numeric ID from the profiles table first
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('name', user?.name)
+          .single();
+
+        if (profileError || !profileData) {
+          console.error('Error fetching profile:', profileError);
+          throw new Error('Could not find user profile');
         }
-        query = query.eq('profile_id', userProfileId);
+
+        query = query.eq('profile_id', profileData.id);
       } else if (profileId) {
         // If admin is viewing a specific profile
         query = query.eq('profile_id', profileId);
