@@ -15,26 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AttendanceRecord {
   id: number;
@@ -61,12 +43,9 @@ interface StaffMember {
   department: string;
 }
 
-const ITEMS_PER_PAGE = 10;
-
 const Analytics = () => {
   const [selectedMonth, setSelectedMonth] = useState("march");
   const [selectedName, setSelectedName] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
   const { user } = useAuth();
 
   // Get staff list from localStorage with proper typing
@@ -152,7 +131,7 @@ const Analytics = () => {
     );
   }, [filteredAttendance]);
 
-  // Calculate statistics
+  // Calculate statistics based on filtered data
   const totalRecords = filteredAttendance.length;
   const onTimeCount = filteredAttendance.filter(record => record.status === "on-time").length;
   const lateCount = filteredAttendance.filter(record => record.status === "late").length;
@@ -170,28 +149,6 @@ const Analytics = () => {
         return "bg-muted text-muted-foreground";
     }
   };
-
-  const getStatusText = (status: "on-time" | "late" | "too-early") => {
-    switch (status) {
-      case "on-time":
-        return "On Time";
-      case "late":
-        return "Late";
-      case "too-early":
-        return "Too Early";
-      default:
-        return status;
-    }
-  };
-
-  // Pagination logic
-  const totalPages = Math.ceil(attendanceData.length / ITEMS_PER_PAGE);
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return attendanceData
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [attendanceData, currentPage]);
 
   // Generate time ticks for Y-axis
   const timeTicks = ["07:00", "08:00", "09:00", "10:00", "11:00"];
@@ -281,69 +238,6 @@ const Analytics = () => {
           </div>
         </Card>
       </div>
-
-      {user?.role === 'admin' && (
-        <Card className="p-6 bg-white border-primary/20">
-          <h2 className="text-xl font-semibold mb-4 text-foreground">All Attendance Records</h2>
-          <ScrollArea className="h-[400px]">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Check-in Time</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="divide-y">
-                {paginatedData.map((record) => (
-                  <TableRow key={record.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium">{record.name}</TableCell>
-                    <TableCell>{record.date}</TableCell>
-                    <TableCell>{record.checkInTime}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(record.status)}`}>
-                        {getStatusText(record.status)}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
-          
-          <div className="mt-4">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-                
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      onClick={() => setCurrentPage(page)}
-                      isActive={currentPage === page}
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        </Card>
-      )}
     </div>
   );
 };
