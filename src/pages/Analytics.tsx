@@ -45,14 +45,21 @@ interface DateGroups {
   [key: string]: ChartDataPoint;
 }
 
+interface StaffMember {
+  id: string;
+  name: string;
+  role: string;
+  department: string;
+}
+
 const Analytics = () => {
   const [selectedMonth, setSelectedMonth] = useState("march");
   const [selectedName, setSelectedName] = useState("all");
   const { user } = useAuth();
 
-  // Get staff list from localStorage
-  const staffList = JSON.parse(localStorage.getItem('staff-list') || '[]');
-  const staffNames = staffList.map((staff: any) => staff.name);
+  // Get staff list from localStorage with proper typing
+  const staffList = JSON.parse(localStorage.getItem('staff-list') || '[]') as StaffMember[];
+  const staffNames = staffList.map((staff) => staff.name);
 
   // Mock data with dates on x-axis and times on y-axis, filtered to only include existing staff
   const attendanceData: AttendanceRecord[] = [
@@ -139,7 +146,7 @@ const Analytics = () => {
   const lateCount = filteredAttendance.filter(record => record.status === "late").length;
   const tooEarlyCount = filteredAttendance.filter(record => record.status === "too-early").length;
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: "on-time" | "late" | "too-early") => {
     switch (status) {
       case "on-time":
         return "bg-secondary/20 text-secondary";
@@ -152,7 +159,7 @@ const Analytics = () => {
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: "on-time" | "late" | "too-early") => {
     switch (status) {
       case "on-time":
         return "On Time";
