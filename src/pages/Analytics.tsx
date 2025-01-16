@@ -58,8 +58,12 @@ const Analytics = () => {
   const staffList = JSON.parse(localStorage.getItem('staff-list') || '[]') as StaffMember[];
   const staffNames = staffList.map((staff) => staff.name);
 
-  // Mock data with dates, filtered to only include existing staff
+  // Get attendance records from localStorage
+  const storedRecords = JSON.parse(localStorage.getItem('attendance-records') || '[]');
+  
+  // Combine stored records with mock data, filtered to only include existing staff
   const attendanceData: AttendanceRecord[] = [
+    ...storedRecords,
     { 
       id: 1,
       name: "John Doe",
