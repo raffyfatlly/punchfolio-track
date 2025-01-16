@@ -175,6 +175,23 @@ const Analytics = () => {
     }
   };
 
+  // Format date for x-axis
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  // Format time for y-axis
+  const formatTime = (time: string) => {
+    return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
   // Generate time ticks for Y-axis
   const timeTicks = ["07:00", "08:00", "09:00", "10:00", "11:00"];
 
@@ -232,31 +249,71 @@ const Analytics = () => {
           <h2 className="text-xl font-semibold mb-4 text-foreground">Check-in Activity</h2>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-50" />
+              <LineChart 
+                data={chartData}
+                margin={{ top: 20, right: 30, left: 50, bottom: 20 }}
+              >
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  className="opacity-30"
+                  stroke="var(--secondary)"
+                />
                 <XAxis 
                   dataKey="date" 
                   stroke="currentColor"
+                  tickFormatter={formatDate}
+                  tick={{ fill: 'var(--foreground)', fontSize: 12 }}
+                  tickLine={{ stroke: 'var(--secondary)' }}
+                  axisLine={{ stroke: 'var(--secondary)' }}
+                  label={{ 
+                    value: 'Date', 
+                    position: 'bottom',
+                    offset: 0,
+                    fill: 'var(--foreground)'
+                  }}
                 />
                 <YAxis 
                   stroke="currentColor"
                   ticks={timeTicks}
-                  domain={['07:00', '11:00']}
-                  type="category"
+                  tickFormatter={formatTime}
+                  tick={{ fill: 'var(--foreground)', fontSize: 12 }}
+                  tickLine={{ stroke: 'var(--secondary)' }}
+                  axisLine={{ stroke: 'var(--secondary)' }}
+                  label={{ 
+                    value: 'Check-in Time', 
+                    angle: -90, 
+                    position: 'left',
+                    offset: -35,
+                    fill: 'var(--foreground)'
+                  }}
                 />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: 'white',
                     border: '1px solid var(--secondary)',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
+                    padding: '8px'
                   }}
+                  labelFormatter={formatDate}
+                  formatter={(value: string) => [formatTime(value), 'Check-in Time']}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="checkInTime"
                   stroke="var(--primary)"
                   strokeWidth={2}
-                  dot={{ fill: "var(--primary)" }}
+                  dot={{ 
+                    fill: "var(--primary)",
+                    stroke: "white",
+                    strokeWidth: 2,
+                    r: 4
+                  }}
+                  activeDot={{
+                    fill: "var(--primary)",
+                    stroke: "white",
+                    strokeWidth: 2,
+                    r: 6
+                  }}
                 />
               </LineChart>
             </ResponsiveContainer>
