@@ -57,7 +57,23 @@ const Login = () => {
           return;
         }
 
-        setStaffList(data);
+        // Validate and transform the data to match the Staff interface
+        const validatedStaffList: Staff[] = data.map(item => {
+          // Ensure role is either "staff" or "admin"
+          if (item.role !== "staff" && item.role !== "admin") {
+            console.warn(`Invalid role "${item.role}" for user ${item.name}, defaulting to "staff"`);
+            item.role = "staff";
+          }
+          
+          return {
+            id: item.id,
+            name: item.name,
+            role: item.role as "staff" | "admin",
+            department: item.department
+          };
+        });
+
+        setStaffList(validatedStaffList);
       } catch (error) {
         console.error('Error fetching staff:', error);
         toast({
