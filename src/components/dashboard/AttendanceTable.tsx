@@ -2,6 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AttendanceRecord {
   id: number;
@@ -43,6 +44,7 @@ interface Props {
 
 export const AttendanceTable = ({ profileId, limit }: Props) => {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const { data: records = [], isLoading, error } = useQuery({
     queryKey: ['attendance', profileId],
@@ -62,7 +64,11 @@ export const AttendanceTable = ({ profileId, limit }: Props) => {
         .order('date', { ascending: false })
         .order('check_in_time', { ascending: false });
 
-      if (profileId) {
+      // If user is not admin, only show their own records
+      if (user?.role !== 'admin') {
+        query = query.eq('profile_id', user?.id);
+      } else if (profileId) {
+        // If admin is viewing a specific profile
         query = query.eq('profile_id', profileId);
       }
       
