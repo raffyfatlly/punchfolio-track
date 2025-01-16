@@ -124,6 +124,7 @@ const CheckIn = () => {
         throw new Error("Could not get canvas context");
       }
 
+      // Draw the video frame to canvas
       ctx.drawImage(videoRef.current, 0, 0);
       const photoData = canvas.toDataURL("image/jpeg");
       setPhoto(photoData);
@@ -160,22 +161,19 @@ const CheckIn = () => {
       const file = new File([blob], fileName, { type: 'image/jpeg' });
 
       // Upload photo to Supabase Storage
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('attendance_photos')
         .upload(fileName, file);
 
       if (uploadError) {
+        console.error('Upload error:', uploadError);
         throw uploadError;
       }
 
       // Get the public URL of the uploaded photo
-      const { data: urlData } = supabase.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('attendance_photos')
         .getPublicUrl(fileName);
-
-      if (!urlData?.publicUrl) {
-        throw new Error('Failed to get public URL for uploaded photo');
-      }
 
       // Create attendance record
       const { error: insertError } = await supabase
@@ -185,10 +183,11 @@ const CheckIn = () => {
           date: malaysiaDate,
           check_in_time: malaysiaTime,
           status: malaysiaTime <= "09:00" ? "on-time" : "late",
-          photo: urlData.publicUrl
+          photo: publicUrl
         });
 
       if (insertError) {
+        console.error('Insert error:', insertError);
         throw insertError;
       }
 
