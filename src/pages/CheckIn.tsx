@@ -133,16 +133,6 @@ const CheckIn = () => {
       const now = new Date();
       const malaysiaDate = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'yyyy-MM-dd');
       const malaysiaTime = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'HH:mm');
-      
-      // Convert base64 to blob
-      const base64Data = photoData.split(',')[1];
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'image/jpeg' });
 
       // Get the profile ID for the current user
       const { data: profileData, error: profileError } = await supabase
@@ -155,22 +145,37 @@ const CheckIn = () => {
         throw new Error('Could not find user profile');
       }
 
-      // Create a new File object from the Blob
-      const file = new File([blob], `${profileData.id}_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      // Convert base64 to blob
+      const base64Data = photoData.split(',')[1];
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+      // Create a unique filename
+      const fileName = `${profileData.id}_${Date.now()}.jpg`;
+      const file = new File([blob], fileName, { type: 'image/jpeg' });
 
       // Upload photo to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('attendance_photos')
-        .upload(file.name, file);
+        .upload(fileName, file);
 
       if (uploadError) {
         throw uploadError;
       }
 
       // Get the public URL of the uploaded photo
-      const { data: { publicUrl } } = supabase.storage
+      const { data: urlData } = supabase.storage
         .from('attendance_photos')
-        .getPublicUrl(file.name);
+        .getPublicUrl(fileName);
+
+      if (!urlData?.publicUrl) {
+        throw new Error('Failed to get public URL for uploaded photo');
+      }
 
       // Create attendance record
       const { error: insertError } = await supabase
@@ -180,7 +185,7 @@ const CheckIn = () => {
           date: malaysiaDate,
           check_in_time: malaysiaTime,
           status: malaysiaTime <= "09:00" ? "on-time" : "late",
-          photo: publicUrl
+          photo: urlData.publicUrl
         });
 
       if (insertError) {
