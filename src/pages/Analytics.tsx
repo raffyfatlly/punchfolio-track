@@ -1,14 +1,5 @@
 import { Card } from "@/components/ui/card";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -40,17 +31,7 @@ interface AttendanceRecord {
   name: string;
   date: string;
   checkInTime: string;
-  status: "on-time" | "late" | "too-early";
-}
-
-interface ChartDataPoint {
-  date: string;
-  checkInTime: string;
-  value: number;
-}
-
-interface DateGroups {
-  [key: string]: ChartDataPoint;
+  status: "on-time" | "late";
 }
 
 interface StaffMember {
@@ -71,7 +52,7 @@ const Analytics = () => {
   const staffList = JSON.parse(localStorage.getItem('staff-list') || '[]') as StaffMember[];
   const staffNames = staffList.map((staff) => staff.name);
 
-  // Mock data with dates on x-axis and times on y-axis, filtered to only include existing staff
+  // Mock data with dates, filtered to only include existing staff
   const attendanceData: AttendanceRecord[] = [
     { 
       id: 1,
@@ -92,7 +73,7 @@ const Analytics = () => {
       name: "Mike Johnson",
       date: "2024-03-20",
       checkInTime: "08:30",
-      status: "too-early" as const,
+      status: "on-time" as const,
     },
     { 
       id: 4,
@@ -113,7 +94,7 @@ const Analytics = () => {
       name: "Mike Johnson",
       date: "2024-03-21",
       checkInTime: "08:15",
-      status: "too-early" as const,
+      status: "on-time" as const,
     },
   ].filter(record => staffNames.includes(record.name));
 
@@ -137,64 +118,21 @@ const Analytics = () => {
   const endIndex = startIndex + itemsPerPage;
   const currentRecords = filteredAttendance.slice(startIndex, endIndex);
 
-  // Generate chart data based on filtered attendance
-  const chartData = useMemo(() => {
-    const dateGroups = filteredAttendance.reduce<DateGroups>((acc, record) => {
-      const date = record.date;
-      if (!acc[date]) {
-        acc[date] = {
-          date,
-          checkInTime: record.checkInTime,
-          value: 1,
-        };
-      }
-      return acc;
-    }, {});
-
-    return Object.values(dateGroups).sort((a, b) => 
-      a.checkInTime.localeCompare(b.checkInTime)
-    );
-  }, [filteredAttendance]);
-
-  // Calculate statistics based on filtered data
+  // Calculate statistics
   const totalRecords = filteredAttendance.length;
   const onTimeCount = filteredAttendance.filter(record => record.status === "on-time").length;
   const lateCount = filteredAttendance.filter(record => record.status === "late").length;
-  const tooEarlyCount = filteredAttendance.filter(record => record.status === "too-early").length;
 
-  const getStatusColor = (status: "on-time" | "late" | "too-early") => {
+  const getStatusColor = (status: "on-time" | "late") => {
     switch (status) {
       case "on-time":
         return "bg-secondary/20 text-secondary";
       case "late":
         return "bg-primary/20 text-primary";
-      case "too-early":
-        return "bg-accent/20 text-accent-foreground";
       default:
         return "bg-muted text-muted-foreground";
     }
   };
-
-  // Format date for x-axis
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  // Format time for y-axis
-  const formatTime = (time: string) => {
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
-  // Generate time ticks for Y-axis (from 7 AM to 11 AM)
-  const timeTicks = ["07:00", "07:30", "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00"];
 
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg">
@@ -226,7 +164,7 @@ const Analytics = () => {
         </Select>
       </div>
 
-      <div className="grid md:grid-cols-4 gap-4">
+      <div className="grid md:grid-cols-3 gap-4">
         <Card className="p-4 bg-white border-primary/20">
           <h3 className="text-lg font-medium text-foreground">Total Check-ins</h3>
           <p className="text-3xl font-bold text-primary">{totalRecords}</p>
@@ -239,155 +177,65 @@ const Analytics = () => {
           <h3 className="text-lg font-medium text-foreground">Late</h3>
           <p className="text-3xl font-bold text-primary">{lateCount}</p>
         </Card>
-        <Card className="p-4 bg-white border-secondary/20">
-          <h3 className="text-lg font-medium text-foreground">Too Early</h3>
-          <p className="text-3xl font-bold text-secondary">{tooEarlyCount}</p>
-        </Card>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card className="p-6 bg-white border-secondary/20">
-          <h2 className="text-xl font-semibold mb-4 text-foreground">Check-in Activity</h2>
-          <div className="h-[400px]"> {/* Increased height for better visibility */}
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart 
-                data={chartData}
-                margin={{ top: 20, right: 30, left: 60, bottom: 40 }} // Adjusted margins
-              >
-                <CartesianGrid 
-                  strokeDasharray="3 3" 
-                  stroke="var(--secondary)"
-                  opacity={0.2}
-                  vertical={false} // Only show horizontal grid lines
-                />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="currentColor"
-                  tickFormatter={formatDate}
-                  tick={{ fill: 'var(--foreground)', fontSize: 12 }}
-                  tickLine={{ stroke: 'var(--secondary)' }}
-                  axisLine={{ stroke: 'var(--secondary)' }}
-                  dy={10} // Move labels down slightly
-                  label={{ 
-                    value: 'Date', 
-                    position: 'bottom',
-                    offset: 20,
-                    fill: 'var(--foreground)',
-                    fontSize: 14,
-                    fontWeight: 500
-                  }}
-                />
-                <YAxis 
-                  stroke="currentColor"
-                  ticks={timeTicks}
-                  tickFormatter={formatTime}
-                  tick={{ fill: 'var(--foreground)', fontSize: 12 }}
-                  tickLine={{ stroke: 'var(--secondary)' }}
-                  axisLine={{ stroke: 'var(--secondary)' }}
-                  dx={-10} // Move labels left slightly
-                  label={{ 
-                    value: 'Check-in Time', 
-                    angle: -90, 
-                    position: 'left',
-                    offset: -45,
-                    fill: 'var(--foreground)',
-                    fontSize: 14,
-                    fontWeight: 500
-                  }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white',
-                    border: '1px solid var(--secondary)',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                  }}
-                  labelFormatter={(value) => `Date: ${formatDate(value as string)}`}
-                  formatter={(value: string) => [`${formatTime(value)}`, 'Check-in Time']}
-                  cursor={{ stroke: 'var(--secondary)', strokeWidth: 1 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="checkInTime"
-                  stroke="var(--primary)"
-                  strokeWidth={3}
-                  dot={{ 
-                    fill: "white",
-                    stroke: "var(--primary)",
-                    strokeWidth: 2,
-                    r: 5
-                  }}
-                  activeDot={{
-                    fill: "var(--primary)",
-                    stroke: "white",
-                    strokeWidth: 2,
-                    r: 7
-                  }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-white border-secondary/20">
-          <h2 className="text-xl font-semibold mb-4 text-foreground">Attendance Records</h2>
-          <ScrollArea className="h-[300px] w-full">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Check-in Time</TableHead>
-                  <TableHead>Status</TableHead>
+      <Card className="p-6 bg-white border-secondary/20">
+        <h2 className="text-xl font-semibold mb-4 text-foreground">Attendance Records</h2>
+        <ScrollArea className="h-[300px] w-full">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Check-in Time</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentRecords.map((record) => (
+                <TableRow key={record.id}>
+                  <TableCell>{record.name}</TableCell>
+                  <TableCell>{record.date}</TableCell>
+                  <TableCell>{record.checkInTime}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(record.status)}`}>
+                      {record.status}
+                    </span>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currentRecords.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell>{record.name}</TableCell>
-                    <TableCell>{record.date}</TableCell>
-                    <TableCell>{record.checkInTime}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(record.status)}`}>
-                        {record.status}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
-          <div className="mt-4">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                  />
+              ))}
+            </TableBody>
+          </Table>
+        </ScrollArea>
+        <div className="mt-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                  >
+                    {page}
+                  </PaginationLink>
                 </PaginationItem>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      onClick={() => setCurrentPage(page)}
-                      isActive={currentPage === page}
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        </Card>
-      </div>
+              ))}
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      </Card>
     </div>
   );
 };
