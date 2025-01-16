@@ -8,6 +8,7 @@ interface AttendanceRecord {
   date: string;
   check_in_time: string;
   status: string;
+  photo: string | null;
   profile: {
     name: string;
   };
@@ -55,6 +56,7 @@ export const AttendanceTable = ({ profileId, limit }: Props) => {
           date,
           check_in_time,
           status,
+          photo,
           profile:profiles(name)
         `)
         .order('date', { ascending: false })
@@ -126,6 +128,7 @@ export const AttendanceTable = ({ profileId, limit }: Props) => {
             <TableHead>Date</TableHead>
             <TableHead>Check-in Time</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Photo</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -138,6 +141,15 @@ export const AttendanceTable = ({ profileId, limit }: Props) => {
                 <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(record.status)}`}>
                   {getStatusText(record.status)}
                 </span>
+              </TableCell>
+              <TableCell>
+                {record.photo && (
+                  <img 
+                    src={record.photo} 
+                    alt="Check-in photo" 
+                    className="w-12 h-12 object-cover rounded-lg"
+                  />
+                )}
               </TableCell>
             </TableRow>
           ))}

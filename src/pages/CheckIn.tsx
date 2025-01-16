@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { formatInTimeZone } from 'date-fns-tz';
 import { useAuth } from "@/contexts/AuthContext";
-import { attendanceService } from "@/services/storageService";
+import { supabase } from "@/integrations/supabase/client";
 
 const CheckIn = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -33,8 +33,8 @@ const CheckIn = () => {
     }
   };
 
-  const takePhoto = () => {
-    if (!user) {
+  const takePhoto = async () => {
+    if (!user?.id) {
       toast({
         title: "Error",
         description: "You must be logged in to check in.",
@@ -54,31 +54,64 @@ const CheckIn = () => {
         setPhoto(photoData);
         stopCamera();
         
-        // Get current date and time in Malaysia timezone
-        const now = new Date();
-        const malaysiaDate = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'yyyy-MM-dd');
-        const malaysiaTime = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'HH:mm');
-        
-        // Create and save new attendance record with correct status type
-        const newRecord = {
-          id: Date.now(),
-          name: user.name,
-          date: malaysiaDate,
-          checkInTime: malaysiaTime,
-          status: malaysiaTime <= "09:00" ? "on-time" : "late",
-          photo: photoData
-        } as const;  // Using const assertion to ensure type safety
+        try {
+          // Get current date and time in Malaysia timezone
+          const now = new Date();
+          const malaysiaDate = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'yyyy-MM-dd');
+          const malaysiaTime = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'HH:mm');
+          
+          // Convert base64 to blob
+          const base64Data = photoData.split(',')[1];
+          const byteCharacters = atob(base64Data);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'image/jpeg' });
 
-        attendanceService.saveRecord(newRecord);
-        
-        toast({
-          title: "Check-in Successful",
-          description: `Time recorded: ${malaysiaTime} (MYT)`,
-        });
+          // Upload photo to Supabase Storage
+          const fileName = `${user.id}_${Date.now()}.jpg`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('attendance_photos')
+            .upload(fileName, blob);
 
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 2000);
+          if (uploadError) throw uploadError;
+
+          // Get the public URL of the uploaded photo
+          const { data: { publicUrl } } = supabase.storage
+            .from('attendance_photos')
+            .getPublicUrl(fileName);
+
+          // Create attendance record
+          const { error: insertError } = await supabase
+            .from('attendance')
+            .insert({
+              profile_id: user.id,
+              date: malaysiaDate,
+              check_in_time: malaysiaTime,
+              status: malaysiaTime <= "09:00" ? "on-time" : "late",
+              photo: publicUrl
+            });
+
+          if (insertError) throw insertError;
+
+          toast({
+            title: "Check-in Successful",
+            description: `Time recorded: ${malaysiaTime} (MYT)`,
+          });
+
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2000);
+        } catch (error) {
+          console.error('Error during check-in:', error);
+          toast({
+            title: "Check-in Failed",
+            description: "There was an error recording your attendance. Please try again.",
+            variant: "destructive",
+          });
+        }
       }
     }
   };
