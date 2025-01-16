@@ -155,11 +155,13 @@ const CheckIn = () => {
         throw new Error('Could not find user profile');
       }
 
+      // Create a new File object from the Blob
+      const file = new File([blob], `${profileData.id}_${Date.now()}.jpg`, { type: 'image/jpeg' });
+
       // Upload photo to Supabase Storage
-      const fileName = `${profileData.id}_${Date.now()}.jpg`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('attendance_photos')
-        .upload(fileName, blob);
+        .upload(file.name, file);
 
       if (uploadError) {
         throw uploadError;
@@ -168,7 +170,7 @@ const CheckIn = () => {
       // Get the public URL of the uploaded photo
       const { data: { publicUrl } } = supabase.storage
         .from('attendance_photos')
-        .getPublicUrl(fileName);
+        .getPublicUrl(file.name);
 
       // Create attendance record
       const { error: insertError } = await supabase
