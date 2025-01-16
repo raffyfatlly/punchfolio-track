@@ -45,9 +45,9 @@ const CheckIn = () => {
       console.log("Requesting camera access...");
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
+          facingMode: "user",
           width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: "user"
+          height: { ideal: 720 }
         },
         audio: false
       });
@@ -57,9 +57,15 @@ const CheckIn = () => {
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        // Wait for video to be ready before playing
+        console.log("Video element setup complete");
+        
+        // Make sure video plays when metadata is loaded
         videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play().catch(console.error);
+          if (videoRef.current) {
+            videoRef.current.play()
+              .then(() => console.log("Video playback started"))
+              .catch(err => console.error("Video playback error:", err));
+          }
         };
       }
     } catch (error) {
@@ -231,13 +237,14 @@ const CheckIn = () => {
 
           {stream && (
             <>
-              <div className="relative rounded-2xl overflow-hidden shadow-lg border-4 border-accent aspect-video">
+              <div className="relative rounded-2xl overflow-hidden shadow-lg border-4 border-accent">
                 <video
                   ref={videoRef}
                   autoPlay
                   playsInline
                   muted
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover bg-black"
+                  style={{ minHeight: "400px" }}
                 />
               </div>
               <Button 
@@ -270,6 +277,6 @@ const CheckIn = () => {
       </Card>
     </div>
   );
-}
+};
 
 export default CheckIn;
