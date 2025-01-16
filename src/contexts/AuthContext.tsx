@@ -68,28 +68,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [session]);
 
   const login = async (username: string, password: string, role: UserRole) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: username,
-        password: password,
+    // For demo purposes, just set the user directly without Supabase auth
+    if (password === "staff123") {
+      setUser({
+        id: Math.random().toString(36).substr(2, 9),
+        name: username,
+        role: role,
       });
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error logging in:', error);
-      throw error;
+    } else {
+      throw new Error("Invalid password");
     }
   };
 
   const logout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      setUser(null);
-    } catch (error) {
-      console.error('Error logging out:', error);
-      throw error;
-    }
+    setUser(null);
   };
 
   return (
