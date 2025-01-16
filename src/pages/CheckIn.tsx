@@ -119,7 +119,7 @@ const CheckIn = () => {
   };
 
   const submitAttendance = async () => {
-    if (!user?.id || !photo) {
+    if (!user?.name || !photo) {
       toast({
         title: "Error",
         description: "Missing required information",
@@ -132,13 +132,9 @@ const CheckIn = () => {
 
     try {
       setIsSubmitting(true);
+      console.log('Starting attendance submission...');
 
-      // Get current date and time in Malaysia timezone
-      const now = new Date();
-      const malaysiaDate = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'yyyy-MM-dd');
-      const malaysiaTime = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'HH:mm');
-
-      // Get the profile ID for the current user
+      // First, get the profile ID for the current user
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id')
@@ -149,22 +145,31 @@ const CheckIn = () => {
         throw new Error('Could not find user profile');
       }
 
-      // Create a new File object from the base64 photo
-      const base64Data = photo.split(',')[1];
-      const byteString = atob(base64Data);
-      const byteNumbers = new Array(byteString.length);
-      for (let i = 0; i < byteString.length; i++) {
-        byteNumbers[i] = byteString.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const photoFile = new File([byteArray], `${profileData.id}_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      // Get current date and time in Malaysia timezone
+      const now = new Date();
+      const malaysiaDate = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'yyyy-MM-dd');
+      const malaysiaTime = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'HH:mm');
 
-      // Upload photo to Supabase Storage
+      // Convert base64 to blob
+      const base64Response = await fetch(photo);
+      const blob = await base64Response.blob();
+
+      // Create a File object from the blob
+      const photoFile = new File(
+        [blob],
+        `${profileData.id}_${Date.now()}.jpg`,
+        { type: 'image/jpeg' }
+      );
+
+      console.log('Uploading photo to storage...');
+      
+      // Upload photo to storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('attendance_photos')
-        .upload(`${photoFile.name}`, photoFile);
+        .upload(photoFile.name, photoFile);
 
       if (uploadError) {
+        console.error('Photo upload error:', uploadError);
         throw uploadError;
       }
 
@@ -172,6 +177,8 @@ const CheckIn = () => {
       const { data: { publicUrl } } = supabase.storage
         .from('attendance_photos')
         .getPublicUrl(photoFile.name);
+
+      console.log('Creating attendance record...');
 
       // Create attendance record
       const { error: insertError } = await supabase
@@ -185,6 +192,7 @@ const CheckIn = () => {
         });
 
       if (insertError) {
+        console.error('Attendance record creation error:', insertError);
         throw insertError;
       }
 
@@ -198,6 +206,7 @@ const CheckIn = () => {
         stream.getTracks().forEach(track => track.stop());
       }
 
+      // Navigate to dashboard after successful submission
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
