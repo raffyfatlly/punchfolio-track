@@ -13,20 +13,17 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Helper function to determine attendance status (same as in Analytics)
-  const getAttendanceStatus = (checkInTime: string) => {
-    const standardTime = parse(CLOCK_IN_TIME, "HH:mm", new Date());
-    const earlyTime = addMinutes(standardTime, -EARLY_BUFFER);
-    const actualTime = parse(checkInTime, "HH:mm", new Date());
-
-    if (isBefore(actualTime, earlyTime)) {
-      return "too-early";
-    } else if (isAfter(actualTime, standardTime)) {
-      return "late";
-    } else {
-      return "on-time";
-    }
-  };
+  // Get attendance records from localStorage
+  const attendanceRecords = JSON.parse(localStorage.getItem('attendance-records') || '[]');
+  
+  // Sort records by date and time (most recent first) and take the last 3
+  const recentAttendance = [...attendanceRecords]
+    .sort((a, b) => {
+      const dateA = new Date(`${a.date}T${a.checkInTime}`);
+      const dateB = new Date(`${b.date}T${b.checkInTime}`);
+      return dateB.getTime() - dateA.getTime();
+    })
+    .slice(0, 3);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -53,28 +50,6 @@ const Dashboard = () => {
         return status;
     }
   };
-
-  // Mock attendance data for the current user - in a real app, this would come from your backend
-  const userAttendanceData = [
-    {
-      id: 1,
-      date: "2024-03-20",
-      checkInTime: "08:45",
-      status: getAttendanceStatus("08:45"),
-    },
-    {
-      id: 2,
-      date: "2024-03-19",
-      checkInTime: "09:15",
-      status: getAttendanceStatus("09:15"),
-    },
-    {
-      id: 3,
-      date: "2024-03-18",
-      checkInTime: "08:50",
-      status: getAttendanceStatus("08:50"),
-    },
-  ];
   
   // Only show simplified view for staff
   if (user?.role === "staff") {
@@ -85,7 +60,7 @@ const Dashboard = () => {
             Welcome Back
           </h1>
           <p className="text-muted-foreground">
-            {new Date().toLocaleDateString('en-US', { 
+            {new Date('2025-03-21').toLocaleDateString('en-US', { 
               weekday: 'long', 
               year: 'numeric', 
               month: 'long', 
@@ -127,7 +102,7 @@ const Dashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {userAttendanceData.map((record) => (
+                {recentAttendance.map((record) => (
                   <TableRow key={record.id}>
                     <TableCell>{record.date}</TableCell>
                     <TableCell>{record.checkInTime}</TableCell>
