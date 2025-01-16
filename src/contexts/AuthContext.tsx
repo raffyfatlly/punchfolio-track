@@ -5,7 +5,7 @@ import { Session } from "@supabase/supabase-js";
 type UserRole = "staff" | "admin";
 
 interface User {
-  id: number;  // Changed from string to number to match the profiles table
+  id: number;  // This is correctly typed as number to match profiles table
   name: string;
   role: UserRole;
 }
@@ -68,23 +68,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [session]);
 
   const login = async (username: string, password: string, role: UserRole) => {
-    // For demo purposes, just set the user directly without Supabase auth
-    if (password === "staff123") {
-      const selectedStaff = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('name', username)
-        .single();
+    try {
+      // For demo purposes, just set the user directly without Supabase auth
+      if (password === "staff123") {
+        const { data: selectedStaff, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('name', username)
+          .single();
 
-      if (selectedStaff.data) {
-        setUser({
-          id: selectedStaff.data.id,
-          name: username,
-          role: role,
-        });
+        if (error) {
+          console.error('Error fetching staff:', error);
+          throw new Error("Failed to find staff member");
+        }
+
+        if (selectedStaff) {
+          setUser({
+            id: selectedStaff.id,  // This is now correctly a number from the database
+            name: username,
+            role: role,
+          });
+        }
+      } else {
+        throw new Error("Invalid password");
       }
-    } else {
-      throw new Error("Invalid password");
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
   };
 
