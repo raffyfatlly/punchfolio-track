@@ -5,7 +5,7 @@ import { Session } from "@supabase/supabase-js";
 type UserRole = "staff" | "admin";
 
 interface User {
-  id: string;
+  id: number;  // Changed from string to number to match the profiles table
   name: string;
   role: UserRole;
 }
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (!error && data) {
           setUser({
-            id: data.id.toString(),
+            id: data.id,  // Now correctly typed as number
             name: data.name,
             role: data.role as UserRole,
           });
@@ -70,11 +70,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (username: string, password: string, role: UserRole) => {
     // For demo purposes, just set the user directly without Supabase auth
     if (password === "staff123") {
-      setUser({
-        id: Math.random().toString(36).substr(2, 9),
-        name: username,
-        role: role,
-      });
+      const selectedStaff = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('name', username)
+        .single();
+
+      if (selectedStaff.data) {
+        setUser({
+          id: selectedStaff.data.id,
+          name: username,
+          role: role,
+        });
+      }
     } else {
       throw new Error("Invalid password");
     }
