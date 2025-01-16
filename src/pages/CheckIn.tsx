@@ -55,9 +55,18 @@ const CheckIn = () => {
       console.log("Camera access granted, tracks:", mediaStream.getTracks());
       setStream(mediaStream);
 
+      // Wait for the video element to be available
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       if (videoRef.current) {
         console.log("Setting video source...");
         videoRef.current.srcObject = mediaStream;
+        console.log("Video element ready state:", videoRef.current.readyState);
+        
+        // Force a repaint of the video element
+        videoRef.current.style.display = 'none';
+        videoRef.current.offsetHeight; // Force a repaint
+        videoRef.current.style.display = 'block';
         
         try {
           await videoRef.current.play();
@@ -213,7 +222,7 @@ const CheckIn = () => {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    setPhoto(null);
+    setPhoto(null); // Reset photo state when exiting camera
   };
 
   const resetCamera = () => {
