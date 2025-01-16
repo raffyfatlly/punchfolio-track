@@ -17,6 +17,23 @@ import {
 } from "@/components/ui/select";
 import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface AttendanceRecord {
   id: number;
@@ -46,6 +63,8 @@ interface StaffMember {
 const Analytics = () => {
   const [selectedMonth, setSelectedMonth] = useState("march");
   const [selectedName, setSelectedName] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const { user } = useAuth();
 
   // Get staff list from localStorage with proper typing
@@ -111,6 +130,12 @@ const Analytics = () => {
     ),
     [selectedName, attendanceData]
   );
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredAttendance.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentRecords = filteredAttendance.slice(startIndex, endIndex);
 
   // Generate chart data based on filtered attendance
   const chartData = useMemo(() => {
@@ -235,6 +260,64 @@ const Analytics = () => {
                 />
               </LineChart>
             </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-6 bg-white border-secondary/20">
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Attendance Records</h2>
+          <ScrollArea className="h-[300px] w-full">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Check-in Time</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentRecords.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell>{record.name}</TableCell>
+                    <TableCell>{record.date}</TableCell>
+                    <TableCell>{record.checkInTime}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(record.status)}`}>
+                        {record.status}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+          <div className="mt-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(page)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         </Card>
       </div>
