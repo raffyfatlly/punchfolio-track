@@ -28,10 +28,7 @@ const CheckIn = () => {
   useEffect(() => {
     return () => {
       if (stream) {
-        stream.getTracks().forEach(track => {
-          track.stop();
-          console.log("Track stopped:", track.label);
-        });
+        stream.getTracks().forEach(track => track.stop());
       }
     };
   }, [stream]);
@@ -42,43 +39,21 @@ const CheckIn = () => {
     try {
       setIsCameraInitializing(true);
       setShowConfirm(false);
-      setPhoto(null); // Reset photo when starting camera
       
-      // Stop any existing stream
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
 
-      console.log("Requesting camera access...");
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "user",
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
+        video: true,
         audio: false
       });
       
-      console.log("Camera access granted, tracks:", mediaStream.getTracks());
       setStream(mediaStream);
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        
-        // Wait for video to be ready
-        await new Promise((resolve) => {
-          if (videoRef.current) {
-            videoRef.current.onloadedmetadata = () => resolve(true);
-          }
-        });
-
-        try {
-          await videoRef.current.play();
-          console.log("Video playback started successfully");
-        } catch (err) {
-          console.error("Error playing video:", err);
-          throw new Error("Failed to start video stream");
-        }
+        await videoRef.current.play();
       }
     } catch (error) {
       console.error("Camera access error:", error);
@@ -93,7 +68,7 @@ const CheckIn = () => {
   };
 
   const capturePhoto = () => {
-    if (!videoRef.current || !stream) {
+    if (!videoRef.current) {
       toast({
         title: "Error",
         description: "Camera not initialized",
@@ -102,29 +77,20 @@ const CheckIn = () => {
       return;
     }
 
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const ctx = canvas.getContext("2d");
-      
-      if (!ctx) {
-        throw new Error("Could not get canvas context");
-      }
-
-      ctx.drawImage(videoRef.current, 0, 0);
-      const photoData = canvas.toDataURL("image/jpeg", 0.8);
-      setPhoto(photoData);
-      stopCamera();
-      setShowConfirm(true);
-    } catch (error) {
-      console.error("Error capturing photo:", error);
-      toast({
-        title: "Error",
-        description: "Failed to capture photo. Please try again.",
-        variant: "destructive",
-      });
+    const canvas = document.createElement("canvas");
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext("2d");
+    
+    if (!ctx) {
+      throw new Error("Could not get canvas context");
     }
+
+    ctx.drawImage(videoRef.current, 0, 0);
+    const photoData = canvas.toDataURL("image/jpeg");
+    setPhoto(photoData);
+    stopCamera();
+    setShowConfirm(true);
   };
 
   const submitAttendance = async () => {
@@ -222,12 +188,8 @@ const CheckIn = () => {
   };
 
   const stopCamera = () => {
-    console.log("Stopping camera stream");
     if (stream) {
-      stream.getTracks().forEach(track => {
-        track.stop();
-        console.log("Track stopped:", track.label);
-      });
+      stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
     if (videoRef.current) {
