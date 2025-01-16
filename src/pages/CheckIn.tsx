@@ -1,8 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Camera, RefreshCcw } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { formatInTimeZone } from 'date-fns-tz';
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,18 +16,48 @@ const CheckIn = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  useEffect(() => {
+    // Cleanup function to stop the stream when component unmounts
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [stream]);
+
   const startCamera = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      // Stop any existing stream
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+
+      const constraints = {
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: "user"
+        }
+      };
+
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       setStream(mediaStream);
+      
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        // Wait for video to be ready
+        await new Promise((resolve) => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = resolve;
+          }
+        });
+        await videoRef.current.play();
       }
     } catch (error) {
       console.error("Error accessing camera:", error);
       toast({
         title: "Camera Error",
-        description: "Unable to access camera. Please check permissions.",
+        description: "Unable to access camera. Please check permissions and try again.",
         variant: "destructive",
       });
     }
@@ -167,7 +197,8 @@ const CheckIn = () => {
                   ref={videoRef}
                   autoPlay
                   playsInline
-                  className="w-full"
+                  muted
+                  className="w-full h-full object-cover"
                 />
               </div>
               <Button 
