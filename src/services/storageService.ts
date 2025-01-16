@@ -85,25 +85,40 @@ export const staffService = {
   // Get all staff members
   getAllStaff: (): StaffMember[] => {
     const staff = localStorage.getItem(KEYS.STAFF);
-    return staff ? JSON.parse(staff) : [];
+    const staffList = staff ? JSON.parse(staff) : [];
+    // Ensure admin is always present
+    const hasAdmin = staffList.some(s => s.id === 0);
+    if (!hasAdmin) {
+      staffList.unshift({
+        id: 0,
+        name: "Admin",
+        position: "Administrator",
+        department: "Management"
+      });
+    }
+    return staffList;
   },
 
   // Add new staff member
   addStaffMember: (staffMember: Omit<StaffMember, "id">): void => {
     const staff = staffService.getAllStaff();
+    const adminUser = staff.find(s => s.id === 0);
     const newStaffMember = {
       id: Date.now(),
       ...staffMember,
     };
-    localStorage.setItem(KEYS.STAFF, JSON.stringify([...staff, newStaffMember]));
+    localStorage.setItem(KEYS.STAFF, JSON.stringify([adminUser, newStaffMember]));
   },
 
   // Delete staff member
   deleteStaffMember: (id: number): void => {
+    if (id === 0) return; // Prevent deleting admin
     const staff = staffService.getAllStaff();
+    const adminUser = staff.find(s => s.id === 0);
+    const filteredStaff = staff.filter(member => member.id !== id);
     localStorage.setItem(
       KEYS.STAFF,
-      JSON.stringify(staff.filter(member => member.id !== id))
+      JSON.stringify([adminUser, ...filteredStaff.filter(s => s.id !== 0)])
     );
   },
 };
