@@ -36,6 +36,27 @@ const Login = () => {
       try {
         setIsLoading(true);
         console.log('Fetching staff list...');
+        
+        // First, ensure we have a session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          throw sessionError;
+        }
+
+        // If no session, create an anonymous session
+        if (!session) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: 'anonymous@example.com',
+            password: 'staff123',
+          });
+          
+          if (signInError) {
+            throw signInError;
+          }
+        }
+
+        // Now fetch the profiles
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -59,7 +80,6 @@ const Login = () => {
           return;
         }
 
-        // Validate and transform the data to match the Staff interface
         const validatedStaffList: Staff[] = data.map(item => ({
           id: item.id,
           name: item.name,
