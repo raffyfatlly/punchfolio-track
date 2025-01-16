@@ -24,7 +24,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useState, useMemo } from "react";
-import { Input } from "@/components/ui/input";
 
 // Define interfaces for our data structures
 interface AttendanceRecord {
@@ -47,7 +46,7 @@ interface DateGroups {
 
 const Analytics = () => {
   const [selectedMonth, setSelectedMonth] = useState("march");
-  const [nameFilter, setNameFilter] = useState("");
+  const [selectedName, setSelectedName] = useState("");
 
   // Mock data with dates on x-axis and times on y-axis
   const attendanceData: AttendanceRecord[] = [
@@ -95,12 +94,18 @@ const Analytics = () => {
     },
   ];
 
+  // Get unique names for the dropdown
+  const uniqueNames = useMemo(() => 
+    Array.from(new Set(attendanceData.map(record => record.name))),
+    [attendanceData]
+  );
+
   // Filter attendance data based on name
   const filteredAttendance = useMemo(() => 
     attendanceData.filter(record =>
-      record.name.toLowerCase().includes(nameFilter.toLowerCase())
+      selectedName ? record.name === selectedName : true
     ),
-    [nameFilter, attendanceData]
+    [selectedName, attendanceData]
   );
 
   // Generate chart data based on filtered attendance
@@ -162,12 +167,19 @@ const Analytics = () => {
       <h1 className="text-3xl font-bold text-foreground">Analytics Dashboard</h1>
 
       <div className="flex flex-col md:flex-row gap-4">
-        <Input
-          placeholder="Filter by name..."
-          value={nameFilter}
-          onChange={(e) => setNameFilter(e.target.value)}
-          className="max-w-xs border-secondary/20"
-        />
+        <Select value={selectedName} onValueChange={setSelectedName}>
+          <SelectTrigger className="max-w-xs border-secondary/20">
+            <SelectValue placeholder="Filter by name" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Names</SelectItem>
+            {uniqueNames.map((name) => (
+              <SelectItem key={name} value={name}>
+                {name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
           <SelectTrigger className="max-w-xs border-secondary/20">
             <SelectValue placeholder="Select month" />
