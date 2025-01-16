@@ -30,13 +30,14 @@ const Login = () => {
         console.log('Fetching staff list...');
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, name, role')
-          .order('name');
+          .select('id, name, role');
         
         if (error) {
           console.error('Supabase error:', error);
           throw error;
         }
+
+        console.log('Fetched staff:', data); // Add this line to debug
 
         if (!data) {
           console.log('No data returned from Supabase');
@@ -49,7 +50,6 @@ const Login = () => {
           return;
         }
 
-        console.log('Fetched staff:', data);
         setStaffList(data);
       } catch (error) {
         console.error('Error fetching staff:', error);
