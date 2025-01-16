@@ -5,22 +5,36 @@ import { Users } from "lucide-react";
 import { AttendanceTable } from "./AttendanceTable";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 export const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   // Fetch staff profiles from Supabase
-  const { data: staffProfiles } = useQuery({
+  const { data: staffProfiles, isError } = useQuery({
     queryKey: ['staffProfiles'],
     queryFn: async () => {
+      console.log('Fetching staff profiles...');
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching staff profiles:', error);
+        toast({
+          title: "Error loading staff profiles",
+          description: "Please try refreshing the page",
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
+      console.log('Fetched staff profiles:', data);
       return data;
-    }
+    },
+    retry: 2,
   });
 
   return (
@@ -44,7 +58,7 @@ export const AdminDashboard = () => {
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-semibold">Manage Staff</h2>
             <p className="text-muted-foreground">
-              {staffProfiles?.length || 0} staff members registered
+              {isError ? "Error loading staff count" : `${staffProfiles?.length || 0} staff members registered`}
             </p>
           </div>
         </div>
