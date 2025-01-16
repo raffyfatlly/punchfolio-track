@@ -6,9 +6,23 @@ import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { Lock, User } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const staffMembers = [
+  { id: "1", name: "John Doe" },
+  { id: "2", name: "Jane Smith" },
+  { id: "3", name: "Mike Johnson" },
+  { id: "4", name: "Sarah Williams" },
+];
 
 const Login = () => {
-  const [username, setUsername] = useState("");
+  const [selectedStaff, setSelectedStaff] = useState("");
   const [password, setPassword] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -16,10 +30,19 @@ const Login = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login(username, password);
     
-    if ((username === "admin" && password === "admin") || 
-        (username === "staff" && password === "staff")) {
+    if (!selectedStaff) {
+      toast({
+        title: "Error",
+        description: "Please select a staff member",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password === "staff123") {
+      const staffMember = staffMembers.find(staff => staff.id === selectedStaff);
+      login(staffMember?.name || "", password);
       toast({
         title: "Welcome back! 👋",
         description: "Successfully logged in",
@@ -28,7 +51,7 @@ const Login = () => {
     } else {
       toast({
         title: "Login failed",
-        description: "Invalid credentials. Try admin/admin or staff/staff",
+        description: "Invalid password. Try staff123",
         variant: "destructive",
       });
     }
@@ -50,14 +73,18 @@ const Login = () => {
           <div className="space-y-4">
             <div className="relative">
               <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground/70" />
-              <Input
-                type="text"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="pl-10 bg-white/50 border-muted h-12 rounded-2xl"
-                required
-              />
+              <Select value={selectedStaff} onValueChange={setSelectedStaff}>
+                <SelectTrigger className="pl-10 bg-white/50 border-muted h-12 rounded-2xl">
+                  <SelectValue placeholder="Select staff member" />
+                </SelectTrigger>
+                <SelectContent>
+                  {staffMembers.map((staff) => (
+                    <SelectItem key={staff.id} value={staff.id}>
+                      {staff.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="relative">
@@ -82,9 +109,7 @@ const Login = () => {
         </form>
 
         <div className="text-sm text-center text-muted-foreground">
-          Demo credentials:<br />
-          Admin: admin/admin<br />
-          Staff: staff/staff
+          Demo password: staff123
         </div>
       </Card>
     </div>

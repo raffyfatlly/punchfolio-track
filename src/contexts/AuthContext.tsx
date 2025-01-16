@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 
-type UserRole = "staff" | "admin";
+type UserRole = "staff";
 
 interface User {
   id: string;
@@ -20,17 +20,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   const login = (username: string, password: string) => {
-    // Simple credential check for demo
-    if (username === "admin" && password === "admin") {
+    if (password === "staff123") {
       setUser({
-        id: "1",
-        name: "Admin User",
-        role: "admin",
-      });
-    } else if (username === "staff" && password === "staff") {
-      setUser({
-        id: "2",
-        name: "Staff User",
+        id: Math.random().toString(36).substr(2, 9),
+        name: username,
         role: "staff",
       });
     }
