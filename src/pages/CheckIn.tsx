@@ -137,16 +137,6 @@ const CheckIn = () => {
       const now = new Date();
       const malaysiaDate = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'yyyy-MM-dd');
       const malaysiaTime = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'HH:mm');
-      
-      // Convert base64 to blob
-      const base64Data = photo.split(',')[1];
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'image/jpeg' });
 
       // Get the profile ID for the current user
       const { data: profileData, error: profileError } = await supabase
@@ -159,11 +149,20 @@ const CheckIn = () => {
         throw new Error('Could not find user profile');
       }
 
+      // Create a new File object from the base64 photo
+      const base64Data = photo.split(',')[1];
+      const byteString = atob(base64Data);
+      const byteNumbers = new Array(byteString.length);
+      for (let i = 0; i < byteString.length; i++) {
+        byteNumbers[i] = byteString.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const photoFile = new File([byteArray], `${profileData.id}_${Date.now()}.jpg`, { type: 'image/jpeg' });
+
       // Upload photo to Supabase Storage
-      const fileName = `${profileData.id}_${Date.now()}.jpg`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('attendance_photos')
-        .upload(fileName, blob);
+        .upload(`${photoFile.name}`, photoFile);
 
       if (uploadError) {
         throw uploadError;
@@ -172,7 +171,7 @@ const CheckIn = () => {
       // Get the public URL of the uploaded photo
       const { data: { publicUrl } } = supabase.storage
         .from('attendance_photos')
-        .getPublicUrl(fileName);
+        .getPublicUrl(photoFile.name);
 
       // Create attendance record
       const { error: insertError } = await supabase
@@ -193,6 +192,11 @@ const CheckIn = () => {
         title: "Check-in Successful",
         description: `Time recorded: ${malaysiaTime} (MYT)`,
       });
+
+      // Stop the camera and clean up
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
 
       setTimeout(() => {
         navigate('/dashboard');
