@@ -12,16 +12,23 @@ interface AuthContextType {
   user: User | null;
   login: (username: string, password: string, role: UserRole) => void;
   logout: () => void;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
     // Initialize user state from localStorage on component mount
     const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+    setIsLoading(false);
+  }, []);
 
   const login = (username: string, password: string, role: UserRole) => {
     if (password === "staff123") {
@@ -31,14 +38,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: role,
       };
       setUser(newUser);
-      // Save user data to localStorage
       localStorage.setItem("user", JSON.stringify(newUser));
     }
   };
 
   const logout = () => {
     setUser(null);
-    // Remove user data from localStorage
     localStorage.removeItem("user");
   };
 
@@ -50,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
