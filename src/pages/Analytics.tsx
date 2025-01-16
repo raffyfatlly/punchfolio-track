@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useState, useMemo } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Define interfaces for our data structures
 interface AttendanceRecord {
@@ -46,7 +47,8 @@ interface DateGroups {
 
 const Analytics = () => {
   const [selectedMonth, setSelectedMonth] = useState("march");
-  const [selectedName, setSelectedName] = useState("all"); // Changed initial value to "all"
+  const [selectedName, setSelectedName] = useState("all");
+  const { user } = useAuth(); // Add this line to get user context
 
   // Mock data with dates on x-axis and times on y-axis
   const attendanceData: AttendanceRecord[] = [
@@ -103,7 +105,7 @@ const Analytics = () => {
   // Filter attendance data based on name
   const filteredAttendance = useMemo(() => 
     attendanceData.filter(record =>
-      selectedName === "all" ? true : record.name === selectedName // Changed condition
+      selectedName === "all" ? true : record.name === selectedName
     ),
     [selectedName, attendanceData]
   );
@@ -277,6 +279,38 @@ const Analytics = () => {
           </div>
         </Card>
       </div>
+
+      {user?.role === 'admin' && (
+        <Card className="p-6 bg-white border-primary/20">
+          <h2 className="text-xl font-semibold mb-4 text-foreground">All Attendance Records</h2>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Check-in Time</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {attendanceData.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell className="font-medium">{record.name}</TableCell>
+                    <TableCell>{record.date}</TableCell>
+                    <TableCell>{record.checkInTime}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(record.status)}`}>
+                        {getStatusText(record.status)}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+      )}
     </div>
   );
 };
