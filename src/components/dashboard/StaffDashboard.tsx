@@ -18,7 +18,7 @@ export const StaffDashboard = () => {
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4">Your Recent Attendance</h2>
         {user?.id ? (
-          <AttendanceTable profileId={user.id} limit={3} />
+          <AttendanceTable profileId={Number(user.id)} limit={3} />
         ) : (
           <p className="text-center text-muted-foreground">No attendance records found</p>
         )}
