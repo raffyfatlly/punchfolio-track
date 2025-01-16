@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
@@ -25,6 +26,8 @@ import { UserPlus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Staff = () => {
   const [newStaff, setNewStaff] = useState({
@@ -35,6 +38,24 @@ const Staff = () => {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Check if user is admin
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (user.role !== "admin") {
+      toast({
+        title: "Access Denied",
+        description: "Only administrators can access this page.",
+        variant: "destructive",
+      });
+      navigate("/");
+    }
+  }, [user, navigate, toast]);
 
   // Fetch staff profiles from Supabase
   const { data: staffList, isLoading } = useQuery({
@@ -59,11 +80,16 @@ const Staff = () => {
       console.log('Fetched staff profiles:', data);
       return data;
     },
+    enabled: !!user && user.role === "admin", // Only fetch if user is admin
   });
 
   // Add new staff member mutation
   const addStaffMutation = useMutation({
     mutationFn: async (newStaffData: typeof newStaff) => {
+      if (!user || user.role !== "admin") {
+        throw new Error("Unauthorized");
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .insert([newStaffData])
@@ -93,6 +119,10 @@ const Staff = () => {
   // Delete staff member mutation
   const deleteStaffMutation = useMutation({
     mutationFn: async (id: number) => {
+      if (!user || user.role !== "admin") {
+        throw new Error("Unauthorized");
+      }
+
       const { error } = await supabase
         .from('profiles')
         .delete()
@@ -122,9 +152,9 @@ const Staff = () => {
     }
   };
 
-  const handleDeleteStaff = (id: number, name: string) => {
-    deleteStaffMutation.mutate(id);
-  };
+  if (!user || user.role !== "admin") {
+    return null; // Don't render anything if not admin
+  }
 
   if (isLoading) {
     return (
@@ -151,6 +181,9 @@ const Staff = () => {
           <DialogContent className="rounded-[1rem]">
             <DialogHeader>
               <DialogTitle>Add New Staff Member</DialogTitle>
+              <DialogDescription>
+                Enter the details of the new staff member below.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -219,7 +252,7 @@ const Staff = () => {
                     <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       className="rounded-lg bg-destructive hover:bg-destructive/90"
-                      onClick={() => handleDeleteStaff(staff.id, staff.name)}
+                      onClick={() => deleteStaffMutation.mutate(staff.id)}
                     >
                       Delete
                     </AlertDialogAction>
