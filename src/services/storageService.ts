@@ -32,6 +32,19 @@ const initializeStorage = () => {
       department: "Management"
     }];
     localStorage.setItem(KEYS.STAFF, JSON.stringify(initialStaff));
+  } else {
+    // Ensure admin exists in the staff list
+    const staff = JSON.parse(existingStaff);
+    const hasAdmin = staff.some((s: StaffMember) => s.id === 0);
+    if (!hasAdmin) {
+      const adminUser = {
+        id: 0,
+        name: "Admin",
+        position: "Administrator",
+        department: "Management"
+      };
+      localStorage.setItem(KEYS.STAFF, JSON.stringify([adminUser]));
+    }
   }
 
   // Initialize empty attendance records if they don't exist
@@ -85,40 +98,34 @@ export const staffService = {
   // Get all staff members
   getAllStaff: (): StaffMember[] => {
     const staff = localStorage.getItem(KEYS.STAFF);
-    const staffList = staff ? JSON.parse(staff) : [];
-    // Ensure admin is always present
-    const hasAdmin = staffList.some(s => s.id === 0);
-    if (!hasAdmin) {
-      staffList.unshift({
+    if (!staff) {
+      // If no staff exists, reinitialize with admin
+      initializeStorage();
+      return [{
         id: 0,
         name: "Admin",
         position: "Administrator",
         department: "Management"
-      });
+      }];
     }
-    return staffList;
+    return JSON.parse(staff);
   },
 
   // Add new staff member
   addStaffMember: (staffMember: Omit<StaffMember, "id">): void => {
-    const staff = staffService.getAllStaff();
-    const adminUser = staff.find(s => s.id === 0);
+    const currentStaff = staffService.getAllStaff();
     const newStaffMember = {
-      id: Date.now(),
+      id: Math.max(...currentStaff.map(s => s.id)) + 1,
       ...staffMember,
     };
-    localStorage.setItem(KEYS.STAFF, JSON.stringify([adminUser, newStaffMember]));
+    localStorage.setItem(KEYS.STAFF, JSON.stringify([...currentStaff, newStaffMember]));
   },
 
   // Delete staff member
   deleteStaffMember: (id: number): void => {
     if (id === 0) return; // Prevent deleting admin
-    const staff = staffService.getAllStaff();
-    const adminUser = staff.find(s => s.id === 0);
-    const filteredStaff = staff.filter(member => member.id !== id);
-    localStorage.setItem(
-      KEYS.STAFF,
-      JSON.stringify([adminUser, ...filteredStaff.filter(s => s.id !== 0)])
-    );
+    const currentStaff = staffService.getAllStaff();
+    const updatedStaff = currentStaff.filter(member => member.id !== id);
+    localStorage.setItem(KEYS.STAFF, JSON.stringify(updatedStaff));
   },
 };
