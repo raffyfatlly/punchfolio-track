@@ -57,8 +57,8 @@ const CheckIn = () => {
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        videoRef.current.play().catch(err => {
-          console.error("Error starting video stream:", err);
+        await videoRef.current.play().catch(err => {
+          console.error("Error playing video:", err);
           toast({
             title: "Camera Error",
             description: "Failed to start video stream. Please try again.",
@@ -242,11 +242,9 @@ const CheckIn = () => {
                   autoPlay
                   playsInline
                   muted
+                  className="absolute top-0 left-0 w-full h-full object-cover"
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    transform: 'scaleX(-1)' // Mirror the camera feed
+                    transform: 'scaleX(-1)'
                   }}
                 />
               </div>
@@ -276,7 +274,7 @@ const CheckIn = () => {
                   src={photo} 
                   alt="Check-in" 
                   className="w-full"
-                  style={{ transform: 'scaleX(-1)' }} // Mirror the photo to match camera feed
+                  style={{ transform: 'scaleX(-1)' }}
                 />
               </div>
               <Button 
