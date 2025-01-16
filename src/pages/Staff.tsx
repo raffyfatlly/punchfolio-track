@@ -23,25 +23,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserPlus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface StaffMember {
-  id: number;
-  name: string;
-  position: string;
-  department: string;
-}
-
-const STORAGE_KEY = 'staff-list';
+import { staffService, type StaffMember } from "@/services/storageService";
 
 const Staff = () => {
-  const [staffList, setStaffList] = useState<StaffMember[]>(() => {
-    const savedStaff = localStorage.getItem(STORAGE_KEY);
-    return savedStaff ? JSON.parse(savedStaff) : [
-      { id: 1, name: "John Doe", position: "Manager", department: "Operations" },
-      { id: 2, name: "Jane Smith", position: "Developer", department: "IT" },
-    ];
-  });
-
+  const [staffList, setStaffList] = useState<StaffMember[]>(() => staffService.getAllStaff());
   const [newStaff, setNewStaff] = useState({
     name: "",
     position: "",
@@ -50,18 +35,18 @@ const Staff = () => {
 
   const { toast } = useToast();
 
-  // Save to localStorage whenever staffList changes
+  // Update local storage when staffList changes
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(staffList));
+    const currentStaff = staffService.getAllStaff();
+    if (JSON.stringify(currentStaff) !== JSON.stringify(staffList)) {
+      staffService.addStaffMember(newStaff);
+    }
   }, [staffList]);
 
   const handleAddStaff = () => {
     if (newStaff.name && newStaff.position && newStaff.department) {
-      const newStaffMember = {
-        id: Date.now(), // Using timestamp as unique ID
-        ...newStaff,
-      };
-      setStaffList([...staffList, newStaffMember]);
+      staffService.addStaffMember(newStaff);
+      setStaffList(staffService.getAllStaff());
       setNewStaff({ name: "", position: "", department: "" });
       toast({
         title: "Staff member added",
@@ -71,7 +56,8 @@ const Staff = () => {
   };
 
   const handleDeleteStaff = (id: number, name: string) => {
-    setStaffList(staffList.filter((staff) => staff.id !== id));
+    staffService.deleteStaffMember(id);
+    setStaffList(staffService.getAllStaff());
     toast({
       title: "Staff member removed",
       description: `${name} has been removed from the staff list.`,

@@ -13,15 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface StaffMember {
-  id: number;
-  name: string;
-  position: string;
-  department: string;
-}
-
-const STORAGE_KEY = 'staff-list';
+import { staffService } from "@/services/storageService";
 
 const Login = () => {
   const [selectedStaff, setSelectedStaff] = useState("");
@@ -30,17 +22,8 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Get staff list from localStorage
-  const staffList = (() => {
-    const savedStaff = localStorage.getItem(STORAGE_KEY);
-    const staffMembers: StaffMember[] = savedStaff ? JSON.parse(savedStaff) : [];
-    
-    // Add admin to the list
-    return [
-      { id: 0, name: "Admin", position: "Administrator", department: "Management" },
-      ...staffMembers
-    ];
-  })();
+  // Get staff list using our service
+  const staffList = staffService.getAllStaff();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +40,6 @@ const Login = () => {
     if (password === "staff123") {
       const staffMember = staffList.find(staff => staff.id.toString() === selectedStaff);
       if (staffMember) {
-        // Set role as admin only for the Admin user, staff for others
         const role = staffMember.name === "Admin" ? "admin" : "staff";
         login(staffMember.name, password, role);
         toast({

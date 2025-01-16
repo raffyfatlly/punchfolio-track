@@ -4,9 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Camera, RefreshCcw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
 import { formatInTimeZone } from 'date-fns-tz';
 import { useAuth } from "@/contexts/AuthContext";
+import { attendanceService } from "@/services/storageService";
 
 const CheckIn = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -59,33 +59,23 @@ const CheckIn = () => {
         const malaysiaDate = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'yyyy-MM-dd');
         const malaysiaTime = formatInTimeZone(now, 'Asia/Kuala_Lumpur', 'HH:mm');
         
-        // Create new attendance record with current Malaysia timestamp
+        // Create and save new attendance record
         const newRecord = {
           id: Date.now(),
           name: user.name,
           date: malaysiaDate,
           checkInTime: malaysiaTime,
           status: malaysiaTime <= "09:00" ? "on-time" : "late",
-          photo: photoData // Store the photo in the record
+          photo: photoData
         };
 
-        // Get existing records
-        const existingRecords = JSON.parse(localStorage.getItem('attendance-records') || '[]');
-        
-        // Filter out any previous records from the same user on the same day
-        const filteredRecords = existingRecords.filter((record: any) => 
-          !(record.name === user.name && record.date === malaysiaDate)
-        );
-        
-        // Add new record at the beginning of the array
-        localStorage.setItem('attendance-records', JSON.stringify([newRecord, ...filteredRecords]));
+        attendanceService.saveRecord(newRecord);
         
         toast({
           title: "Check-in Successful",
           description: `Time recorded: ${malaysiaTime} (MYT)`,
         });
 
-        // Redirect to dashboard after 2 seconds
         setTimeout(() => {
           navigate('/dashboard');
         }, 2000);
