@@ -35,6 +35,7 @@ const Staff = () => {
     department: "",
     role: "staff" as const,
   });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -69,45 +70,44 @@ const Staff = () => {
       
       if (error) {
         console.error('Error fetching staff profiles:', error);
-        toast({
-          title: "Error loading staff profiles",
-          description: "Please try refreshing the page",
-          variant: "destructive",
-        });
         throw error;
       }
       
       console.log('Fetched staff profiles:', data);
       return data;
     },
-    enabled: !!user && user.role === "admin", // Only fetch if user is admin
+    enabled: !!user && user.role === "admin",
   });
 
   // Add new staff member mutation
   const addStaffMutation = useMutation({
     mutationFn: async (newStaffData: typeof newStaff) => {
-      if (!user || user.role !== "admin") {
-        throw new Error("Unauthorized");
-      }
-
+      console.log('Adding new staff member:', newStaffData);
+      
       const { data, error } = await supabase
         .from('profiles')
         .insert([newStaffData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding staff:', error);
+        throw error;
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staffProfiles'] });
       toast({
-        title: "Staff member added",
+        title: "Success",
         description: `${newStaff.name} has been added to the staff list.`,
       });
       setNewStaff({ name: "", department: "", role: "staff" });
+      setIsDialogOpen(false);
     },
     onError: (error) => {
+      console.error('Mutation error:', error);
       toast({
         title: "Error adding staff member",
         description: error.message,
@@ -130,7 +130,7 @@ const Staff = () => {
 
       if (error) throw error;
     },
-    onSuccess: (_, id) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staffProfiles'] });
       toast({
         title: "Staff member removed",
@@ -146,14 +146,22 @@ const Staff = () => {
     },
   });
 
-  const handleAddStaff = () => {
+  const handleAddStaff = (e: React.FormEvent) => {
+    e.preventDefault();
     if (newStaff.name && newStaff.department) {
+      console.log('Submitting new staff:', newStaff);
       addStaffMutation.mutate(newStaff);
+    } else {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
     }
   };
 
   if (!user || user.role !== "admin") {
-    return null; // Don't render anything if not admin
+    return null;
   }
 
   if (isLoading) {
@@ -171,7 +179,7 @@ const Staff = () => {
           Staff Management
         </h1>
         
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-secondary hover:bg-secondary/90">
               <UserPlus className="mr-2 h-4 w-4" />
@@ -185,7 +193,7 @@ const Staff = () => {
                 Enter the details of the new staff member below.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <form onSubmit={handleAddStaff} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
                 <Input
@@ -195,6 +203,7 @@ const Staff = () => {
                     setNewStaff({ ...newStaff, name: e.target.value })
                   }
                   className="rounded-lg"
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -206,16 +215,17 @@ const Staff = () => {
                     setNewStaff({ ...newStaff, department: e.target.value })
                   }
                   className="rounded-lg"
+                  required
                 />
               </div>
               <Button 
-                onClick={handleAddStaff} 
+                type="submit"
                 className="w-full rounded-lg bg-secondary hover:bg-secondary/90"
                 disabled={addStaffMutation.isPending}
               >
                 {addStaffMutation.isPending ? "Adding..." : "Add Staff Member"}
               </Button>
-            </div>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
